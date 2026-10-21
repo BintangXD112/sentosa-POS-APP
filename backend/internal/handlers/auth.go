@@ -11,8 +11,9 @@ import (
 )
 
 type LoginRequest struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
+	Username    string `json:"username"`
+	Password    string `json:"password"`
+	DeviceToken string `json:"device_token"`
 }
 
 type UserResponse struct {
@@ -77,6 +78,76 @@ func Login(c *fiber.Ctx) error {
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)); err != nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid username or password"})
 	}
+
+	// 2FA: Check if login device is recognized and trusted (< 30 days)
+	deviceToken := strings.TrimSpace(req.DeviceToken)
+	if deviceToken == "" {
+		deviceToken = strings.TrimSpace(c.Get("X-Device-Token"))
+	}
+
+	ip := c.IP()
+	if xf := c.Get("X-Forwarded-For"); xf != "" {
+		ip = strings.TrimSpace(strings.Split(xf, ",")[0])
+	}
+	userAgent := c.Get("User-Agent")
+
+	var isTrusted bool
+	if deviceToken != "" {
+		var count int
+		err := database.Pool.QueryRow(c.Context(), `
+			SELECT COUNT(*) FROM trusted_devices
+			WHERE user_id = $1 AND device_token = $2 AND expires_at > NOW()
+		`, user.ID, deviceToken).Scan(&count)
+		if err == nil && count > 0 {
+			isTrusted = true
+			_, _ = database.Pool.Exec(c.Context(), `
+				UPDATE trusted_devices SET last_used_at = NOW() WHERE user_id = $1 AND device_token = $2
+			`, user.ID, deviceToken)
+		}
+	}
+
+	if !isTrusted {
+		// Device is unrecognized or 30-day trust expired: require 2FA OTP verification
+		otpCode := Generate6DigitCode()
+		codeHash := HashOTP(otpCode)
+		challengeToken := uuid.New().String()
+
+		_, err = database.Pool.Exec(c.Context(), `
+			INSERT INTO two_factor_challenges (id, user_id, challenge_token, code_hash, ip_address, user_agent, expires_at, created_at)
+			VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, NOW() + INTERVAL '10 minutes', NOW())
+		`, user.ID, challengeToken, codeHash, ip, userAgent)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Gagal menginisialisasi verifikasi A2F"})
+		}
+
+		emailStr := ""
+		if user.Email != nil {
+			emailStr = *user.Email
+		}
+
+		// Send 2FA email asynchronously
+		if emailStr != "" {
+			go func() {
+				_ = SendTwoFactorEmail(emailStr, user.FullName, otpCode, ip, userAgent)
+			}()
+		}
+
+		database.LogAudit(c.Context(), user.BusinessID, &user.ID, "auth.login_2fa_challenge_issued", "user", user.ID.String(), map[string]interface{}{
+			"reason":           "Perangkat baru/tidak dikenal terdeteksi",
+			"has_device_token": deviceToken != "",
+		}, ip, userAgent)
+
+		return c.JSON(fiber.Map{
+			"require_2fa":     true,
+			"challenge_token": challengeToken,
+			"masked_email":    MaskEmail(emailStr),
+			"message":         "Perangkat baru terdeteksi. Kode verifikasi 2FA telah dikirim ke email Anda.",
+		})
+	}
+
+	database.LogAudit(c.Context(), user.BusinessID, &user.ID, "auth.login_trusted", "user", user.ID.String(), map[string]interface{}{
+		"device_recognized": true,
+	}, ip, userAgent)
 
 	token, err := auth.GenerateToken(user.ID, user.BusinessID, user.Username, user.Role, user.FullName)
 	if err != nil {

@@ -3,6 +3,7 @@ import {
   Store,
   ShoppingCart,
   Boxes,
+  Truck,
   Receipt,
   BarChart3,
   Settings,
@@ -13,6 +14,7 @@ import {
   ChevronRight,
   Menu,
   X,
+  ShieldCheck,
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { useCartStore } from '../store/cartStore';
@@ -58,8 +60,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const navItems: NavItem[] = [
     { id: 'pos', label: 'POS Kasir', icon: <ShoppingCart className="w-5 h-5" />, badge: totalCartItems || undefined },
     { id: 'inventory', label: 'Inventaris', icon: <Boxes className="w-5 h-5" /> },
+    { id: 'suppliers', label: 'Supplier & Pasokan', icon: <Truck className="w-5 h-5" />, roles: ['owner', 'branch_manager', 'inventory_staff'] },
     { id: 'sales', label: 'Riwayat Transaksi', icon: <Receipt className="w-5 h-5" /> },
     { id: 'reports', label: 'Laporan', icon: <BarChart3 className="w-5 h-5" />, roles: ['owner', 'branch_manager'] },
+    { id: 'audit-logs', label: 'Log Audit', icon: <ShieldCheck className="w-5 h-5" />, roles: ['owner'] },
     { id: 'settings', label: 'Pengaturan', icon: <Settings className="w-5 h-5" /> },
   ];
 
@@ -240,8 +244,10 @@ export const MobileTopBar: React.FC<{ onMenuClick: () => void; activeTab: string
   const tabLabels: Record<string, string> = {
     pos: 'Kasir',
     inventory: 'Inventaris',
+    suppliers: 'Supplier',
     sales: 'Transaksi',
     reports: 'Laporan',
+    'audit-logs': 'Log Audit',
     settings: 'Pengaturan',
   };
 

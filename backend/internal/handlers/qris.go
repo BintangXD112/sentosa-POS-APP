@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -105,7 +106,19 @@ func CreateQRISSession(c *fiber.Ctx) error {
 		port = "8080"
 	}
 	serverIP := getOutboundIP()
-	payURL := fmt.Sprintf("http://%s:%s/api/v1/qris/confirm/%s", serverIP, port, sessionID)
+
+	var payURL string
+	if publicURL := os.Getenv("PUBLIC_URL"); publicURL != "" {
+		payURL = fmt.Sprintf("%s/api/v1/qris/confirm/%s", strings.TrimRight(publicURL, "/"), sessionID)
+	} else if os.Getenv("VERCEL") != "" || (c.Hostname() != "localhost" && c.Hostname() != "127.0.0.1") {
+		proto := c.Protocol()
+		if fwdProto := c.Get("X-Forwarded-Proto"); fwdProto != "" {
+			proto = fwdProto
+		}
+		payURL = fmt.Sprintf("%s://%s/api/v1/qris/confirm/%s", proto, c.Hostname(), sessionID)
+	} else {
+		payURL = fmt.Sprintf("http://%s:%s/api/v1/qris/confirm/%s", serverIP, port, sessionID)
+	}
 
 	return c.JSON(fiber.Map{
 		"session_id": sessionID,

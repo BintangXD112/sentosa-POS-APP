@@ -99,6 +99,8 @@ func main() {
 
 	// Public Auth Routes
 	api.Post("/auth/login", handlers.Login)
+	api.Post("/auth/verify-2fa", handlers.VerifyTwoFactor)
+	api.Post("/auth/resend-2fa", handlers.ResendTwoFactorCode)
 	api.Post("/auth/forgot-password", handlers.ForgotPassword)
 	api.Get("/auth/verify-reset-token", handlers.VerifyResetToken)
 	api.Post("/auth/reset-password", handlers.ResetPassword)
@@ -118,11 +120,28 @@ func main() {
 	protected.Put("/business", middleware.RequireRoles("owner"), handlers.UpdateBusiness)
 	protected.Put("/branches/:id", middleware.RequireRoles("owner"), handlers.UpdateBranch)
 
+	// User Management (Owner only)
+	protected.Get("/users", middleware.RequireRoles("owner"), handlers.GetUsers)
+	protected.Post("/users", middleware.RequireRoles("owner"), handlers.CreateUser)
+	protected.Put("/users/:id", middleware.RequireRoles("owner"), handlers.UpdateUser)
+	protected.Delete("/users/:id", middleware.RequireRoles("owner"), handlers.DeleteUser)
+
+	// Audit Logs (Owner only)
+	protected.Get("/audit-logs", middleware.RequireRoles("owner"), handlers.GetAuditLogs)
+
+	// Suppliers Management & Inbound Restock
+	protected.Get("/suppliers", handlers.GetSuppliers)
+	protected.Post("/suppliers", middleware.RequireRoles("owner", "branch_manager", "inventory_staff"), handlers.CreateSupplier)
+	protected.Put("/suppliers/:id", middleware.RequireRoles("owner", "branch_manager", "inventory_staff"), handlers.UpdateSupplier)
+	protected.Delete("/suppliers/:id", middleware.RequireRoles("owner", "branch_manager"), handlers.DeleteSupplier)
+	protected.Post("/suppliers/restock", middleware.RequireRoles("owner", "branch_manager", "inventory_staff"), handlers.RestockFromSupplier)
+
 	// Branch-scoped routes
 	branchScoped := protected.Group("", middleware.ValidateBranchAccess())
 
 	// Catalog & Products
 	branchScoped.Get("/products", handlers.GetProducts)
+	branchScoped.Delete("/products/:id", middleware.RequireRoles("owner", "branch_manager"), handlers.DeleteProduct)
 	branchScoped.Get("/categories", handlers.GetCategories)
 	branchScoped.Get("/units", handlers.GetUnits)
 
@@ -169,8 +188,8 @@ func main() {
 	fmt.Printf("   Backend & Frontend aktif dan siap digunakan.\n")
 	fmt.Printf("=======================================================\n\n")
 
-	// Open browser automatically unless disabled
-	if os.Getenv("NO_BROWSER") != "1" {
+	// Open browser automatically unless disabled or running in cloud/Vercel
+	if os.Getenv("NO_BROWSER") != "1" && os.Getenv("VERCEL") == "" {
 		go func() {
 			time.Sleep(800 * time.Millisecond)
 			openBrowser(url)

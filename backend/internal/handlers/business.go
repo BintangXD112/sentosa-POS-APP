@@ -98,6 +98,12 @@ func UpdateBusiness(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Gagal menyimpan pengaturan toko"})
 	}
 
+	userID := c.Locals("user_id").(uuid.UUID)
+	database.LogAudit(c.Context(), bizID, &userID, "business.update", "business", bizID.String(), map[string]interface{}{
+		"name":     req.Name,
+		"currency": req.Currency,
+	}, c.IP(), c.Get("User-Agent"))
+
 	return c.JSON(fiber.Map{
 		"message": "Pengaturan toko berhasil diperbarui",
 		"business": fiber.Map{
@@ -142,6 +148,12 @@ func UpdateBranch(c *fiber.Ctx) error {
 	if res.RowsAffected() == 0 {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Cabang tidak ditemukan"})
 	}
+
+	userID := c.Locals("user_id").(uuid.UUID)
+	database.LogAudit(c.Context(), bizID, &userID, "branch.update", "branch", branchID.String(), map[string]interface{}{
+		"name":      req.Name,
+		"is_active": req.IsActive,
+	}, c.IP(), c.Get("User-Agent"))
 
 	return c.JSON(fiber.Map{
 		"message": "Data cabang berhasil diperbarui",

@@ -140,3 +140,16 @@ export interface ReportData {
   top_products: TopProduct[];
   cashier_performance: CashierPerformance[];
 }
+
+export interface Supplier {
+  id: string;
+  name: string;
+  contact_person: string;
+  phone: string;
+  email: string;
+  address: string;
+  notes: string;
+  created_at: string;
+  total_supplies: number;
+}
+

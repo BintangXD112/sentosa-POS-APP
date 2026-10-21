@@ -241,9 +241,9 @@ func VoidSale(c *fiber.Ctx) error {
 
 	// Audit log
 	_, _ = tx.Exec(c.Context(), `
-		INSERT INTO audit_logs (business_id, user_id, action, entity_type, entity_id, details)
-		VALUES ($1, $2, 'VOID_SALE', 'sales', $3, $4)
-	`, bizID, userID, saleID.String(), fmt.Sprintf(`{"receipt_number":"%s"}`, receiptNumber))
+		INSERT INTO audit_logs (id, business_id, user_id, action, entity_type, entity_id, details, ip_address, user_agent, created_at)
+		VALUES (gen_random_uuid(), $1, $2, 'sales.void', 'sales', $3, $4, $5, $6, NOW())
+	`, bizID, userID, saleID.String(), fmt.Sprintf(`{"receipt_number":"%s"}`, receiptNumber), c.IP(), c.Get("User-Agent"))
 
 	if err := tx.Commit(c.Context()); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to commit void"})

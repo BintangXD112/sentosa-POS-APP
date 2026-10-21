@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   User,
+  Users,
   Lock,
   Bell,
   Palette,
@@ -21,11 +22,15 @@ import {
   Edit2,
   AlertCircle,
   Coins,
+  Plus,
+  Trash2,
+  Search,
+  X,
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { useThemeStore, type AccentColor } from '../store/themeStore';
 import { apiRequest } from '../api/client';
-import type { Branch } from '../types';
+import type { Branch, Role } from '../types';
 
 const roleLabels: Record<string, { label: string; color: string }> = {
   owner: { label: 'Owner', color: 'bg-amber-500/20 text-amber-300 border-amber-500/30' },
@@ -34,7 +39,7 @@ const roleLabels: Record<string, { label: string; color: string }> = {
   inventory_staff: { label: 'Staf Gudang', color: 'bg-blue-500/20 text-blue-300 border-blue-500/30' },
 };
 
-type Section = 'profile' | 'store' | 'security' | 'notifications' | 'appearance' | 'about';
+type Section = 'profile' | 'store' | 'users' | 'security' | 'notifications' | 'appearance' | 'about';
 
 export const SettingsView: React.FC = () => {
   const { user, currentBranch, setCurrentBranch, updateUser } = useAuthStore();
@@ -107,11 +112,163 @@ export const SettingsView: React.FC = () => {
     }
   };
 
+  // --- User Management state (Owner only) ---
+  interface ManagedUser {
+    id: string;
+    username: string;
+    email: string;
+    full_name: string;
+    role: Role;
+    is_active: boolean;
+    created_at: string;
+    branches: Branch[];
+  }
+
+  const [usersList, setUsersList] = useState<ManagedUser[]>([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [userSearch, setUserSearch] = useState('');
+  const [userModalOpen, setUserModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<ManagedUser | null>(null);
+  const [userSaving, setUserSaving] = useState(false);
+  const [userMsg, setUserMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [deleteConfirmUser, setDeleteConfirmUser] = useState<ManagedUser | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  // User form fields
+  const [uUsername, setUUsername] = useState('');
+  const [uFullName, setUFullName] = useState('');
+  const [uEmail, setUEmail] = useState('');
+  const [uPassword, setUPassword] = useState('');
+  const [uRole, setURole] = useState<Role>('cashier');
+  const [uIsActive, setUIsActive] = useState(true);
+  const [uBranchIds, setUBranchIds] = useState<string[]>([]);
+
+  const fetchUsers = async () => {
+    if (!isOwner) return;
+    setUsersLoading(true);
+    try {
+      const res = await apiRequest<{ users: ManagedUser[] }>('/users');
+      setUsersList(res.users || []);
+    } catch (err) {
+      console.error('Failed to load users:', err);
+    } finally {
+      setUsersLoading(false);
+    }
+  };
+
   useEffect(() => {
-    if (activeSection === 'store' && isOwner) {
+    if ((activeSection === 'store' || activeSection === 'users') && isOwner) {
       fetchBusinessData();
+      if (activeSection === 'users') {
+        fetchUsers();
+      }
     }
   }, [activeSection, isOwner]);
+
+  const handleOpenAddUser = () => {
+    setEditingUser(null);
+    setUUsername('');
+    setUFullName('');
+    setUEmail('');
+    setUPassword('');
+    setURole('cashier');
+    setUIsActive(true);
+    setUBranchIds(branchesList.map((b) => b.id));
+    setUserMsg(null);
+    setUserModalOpen(true);
+  };
+
+  const handleOpenEditUser = (u: ManagedUser) => {
+    setEditingUser(u);
+    setUUsername(u.username);
+    setUFullName(u.full_name);
+    setUEmail(u.email);
+    setUPassword('');
+    setURole(u.role);
+    setUIsActive(u.is_active);
+    setUBranchIds(u.branches ? u.branches.map((b) => b.id) : []);
+    setUserMsg(null);
+    setUserModalOpen(true);
+  };
+
+  const handleSaveUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setUserMsg(null);
+
+    if (!uFullName.trim()) {
+      setUserMsg({ type: 'error', text: 'Nama lengkap wajib diisi.' });
+      return;
+    }
+    if (!editingUser && !uUsername.trim()) {
+      setUserMsg({ type: 'error', text: 'Username wajib diisi.' });
+      return;
+    }
+    if (!editingUser && (!uPassword || uPassword.length < 6)) {
+      setUserMsg({ type: 'error', text: 'Password minimal 6 karakter.' });
+      return;
+    }
+
+    setUserSaving(true);
+    try {
+      if (editingUser) {
+        await apiRequest(`/users/${editingUser.id}`, {
+          method: 'PUT',
+          body: JSON.stringify({
+            full_name: uFullName.trim(),
+            email: uEmail.trim(),
+            role: uRole,
+            password: uPassword || undefined,
+            is_active: uIsActive,
+            branch_ids: uBranchIds,
+          }),
+        });
+        setUserMsg({ type: 'success', text: 'Data pengguna berhasil diperbarui!' });
+      } else {
+        await apiRequest('/users', {
+          method: 'POST',
+          body: JSON.stringify({
+            username: uUsername.trim().toLowerCase(),
+            full_name: uFullName.trim(),
+            email: uEmail.trim(),
+            password: uPassword,
+            role: uRole,
+            branch_ids: uBranchIds,
+          }),
+        });
+        setUserMsg({ type: 'success', text: 'Pengguna baru berhasil ditambahkan!' });
+      }
+
+      fetchUsers();
+      setTimeout(() => {
+        setUserModalOpen(false);
+        setUserMsg(null);
+      }, 1000);
+    } catch (err: any) {
+      setUserMsg({ type: 'error', text: err.message || 'Gagal menyimpan data pengguna.' });
+    } finally {
+      setUserSaving(false);
+    }
+  };
+
+  const handleDeleteUser = async (u: ManagedUser) => {
+    if (u.id === user?.id) {
+      alert('Anda tidak dapat menghapus akun Anda sendiri.');
+      return;
+    }
+    setDeleteLoading(true);
+    try {
+      const res = await apiRequest<{ message: string }>(`/users/${u.id}`, {
+        method: 'DELETE',
+      });
+      alert(res.message || 'Pengguna berhasil dihapus');
+      setDeleteConfirmUser(null);
+      fetchUsers();
+    } catch (err: any) {
+      alert(err.message || 'Gagal menghapus pengguna.');
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
 
   // --- Password change state ---
   const [currentPass, setCurrentPass] = useState('');
@@ -306,6 +463,12 @@ export const SettingsView: React.FC = () => {
             id: 'store' as Section,
             label: 'Pengaturan Toko',
             icon: <Store className="w-4 h-4" />,
+            badge: 'Owner',
+          },
+          {
+            id: 'users' as Section,
+            label: 'Manajemen Pengguna',
+            icon: <Users className="w-4 h-4" />,
             badge: 'Owner',
           },
         ]
@@ -819,6 +982,352 @@ export const SettingsView: React.FC = () => {
                   ))}
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* USER MANAGEMENT SECTION (OWNER ONLY) */}
+          {activeSection === 'users' && isOwner && (
+            <div className="space-y-6">
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+                  <div>
+                    <h2 className="text-base font-bold text-white flex items-center gap-2">
+                      <Users className="w-5 h-5 text-emerald-400" />
+                      <span>Manajemen Pengguna & Staf</span>
+                    </h2>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      Tambah, edit, ganti peran hak akses, dan kelola penugasan cabang kasir
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleOpenAddUser}
+                    className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl shadow-md shadow-emerald-600/20 active:scale-95 transition-all cursor-pointer self-start sm:self-auto"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Tambah Pengguna</span>
+                  </button>
+                </div>
+
+                {/* Filter and stats */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                  <div className="relative flex-1 max-w-sm">
+                    <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      value={userSearch}
+                      onChange={(e) => setUserSearch(e.target.value)}
+                      placeholder="Cari pengguna (nama, username, email)..."
+                      className="w-full pl-10 pr-3.5 py-2 bg-slate-800/80 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors"
+                    />
+                  </div>
+                  <div className="text-xs text-slate-400">
+                    Total: <strong className="text-slate-200">{usersList.length} Akun</strong>
+                  </div>
+                </div>
+
+                {/* User Cards / Table */}
+                {usersLoading ? (
+                  <div className="py-8 text-center text-sm text-slate-400">Memuat data pengguna...</div>
+                ) : usersList.length === 0 ? (
+                  <div className="py-8 text-center text-sm text-slate-500">Belum ada pengguna terdaftar.</div>
+                ) : (
+                  <div className="space-y-2.5">
+                    {usersList
+                      .filter((u) => {
+                        const q = userSearch.toLowerCase();
+                        return (
+                          u.full_name.toLowerCase().includes(q) ||
+                          u.username.toLowerCase().includes(q) ||
+                          u.email.toLowerCase().includes(q) ||
+                          u.role.toLowerCase().includes(q)
+                        );
+                      })
+                      .map((u) => {
+                        const rBadge = roleLabels[u.role] || { label: u.role, color: 'bg-slate-700 text-slate-300' };
+                        const isSelf = u.id === user?.id;
+
+                        return (
+                          <div
+                            key={u.id}
+                            className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-slate-800/40 border border-slate-800 hover:border-slate-700/80 rounded-xl gap-3 transition-colors"
+                          >
+                            <div className="flex items-start sm:items-center gap-3 min-w-0">
+                              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center text-sm font-bold text-white flex-shrink-0 border border-slate-700">
+                                {u.full_name?.charAt(0).toUpperCase()}
+                              </div>
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="text-sm font-bold text-white truncate">{u.full_name}</span>
+                                  <span className="text-xs text-slate-400 font-mono">@{u.username}</span>
+                                  {isSelf && (
+                                    <span className="text-[10px] px-1.5 py-0.2 bg-emerald-500/20 text-emerald-300 rounded border border-emerald-500/30 font-semibold">
+                                      Akun Anda
+                                    </span>
+                                  )}
+                                  <span className={`text-[10px] font-semibold px-2 py-0.5 border rounded-full ${rBadge.color}`}>
+                                    {rBadge.label}
+                                  </span>
+                                  <span
+                                    className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                                      u.is_active
+                                        ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                                        : 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
+                                    }`}
+                                  >
+                                    {u.is_active ? 'Aktif' : 'Nonaktif'}
+                                  </span>
+                                </div>
+                                <div className="text-xs text-slate-400 mt-1 flex flex-wrap items-center gap-x-4 gap-y-1">
+                                  {u.email && <span>{u.email}</span>}
+                                  <span className="flex items-center gap-1 text-[11px] text-slate-400">
+                                    <Building2 className="w-3 h-3 text-emerald-400" />
+                                    <span>
+                                      {u.branches && u.branches.length > 0
+                                        ? u.branches.map((b) => b.name).join(', ')
+                                        : 'Belum ada cabang'}
+                                    </span>
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="flex items-center gap-1.5 self-end sm:self-auto flex-shrink-0">
+                              <button
+                                onClick={() => handleOpenEditUser(u)}
+                                className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg text-xs font-semibold flex items-center gap-1 border border-slate-700 transition-colors cursor-pointer"
+                                title="Edit Pengguna"
+                              >
+                                <Edit2 className="w-3.5 h-3.5 text-emerald-400" />
+                                <span>Edit</span>
+                              </button>
+                              {!isSelf && (
+                                <button
+                                  onClick={() => setDeleteConfirmUser(u)}
+                                  className="px-2.5 py-1.5 bg-slate-800 hover:bg-rose-900/40 text-slate-400 hover:text-rose-300 rounded-lg text-xs font-semibold flex items-center gap-1 border border-slate-700 transition-colors cursor-pointer"
+                                  title="Hapus Pengguna"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5 text-rose-400" />
+                                  <span>Hapus</span>
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
+                )}
+              </div>
+
+              {/* Add / Edit User Modal */}
+              {userModalOpen && (
+                <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+                  <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg max-h-[92vh] flex flex-col overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+                    <div className="p-4 sm:p-5 border-b border-slate-800 flex items-center justify-between flex-shrink-0">
+                      <div className="flex items-center gap-2">
+                        <Users className="w-5 h-5 text-emerald-400" />
+                        <h3 className="text-sm sm:text-base font-bold text-white">
+                          {editingUser ? `Edit Pengguna: @${editingUser.username}` : 'Tambah Pengguna Baru'}
+                        </h3>
+                      </div>
+                      <button
+                        onClick={() => setUserModalOpen(false)}
+                        className="text-slate-400 hover:text-white p-1 rounded-lg"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    <form onSubmit={handleSaveUser} className="p-4 sm:p-5 space-y-4 overflow-y-auto flex-1">
+                      {userMsg && (
+                        <div
+                          className={`p-3 rounded-xl text-xs flex items-start gap-2.5 ${
+                            userMsg.type === 'success'
+                              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
+                              : 'bg-rose-500/10 text-rose-400 border border-rose-500/30'
+                          }`}
+                        >
+                          <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                          <span>{userMsg.text}</span>
+                        </div>
+                      )}
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-300 mb-1">
+                            Nama Lengkap <span className="text-rose-400">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            value={uFullName}
+                            onChange={(e) => setUFullName(e.target.value)}
+                            placeholder="Contoh: Budi Santoso"
+                            className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-300 mb-1">
+                            Username <span className="text-rose-400">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            disabled={!!editingUser}
+                            value={uUsername}
+                            onChange={(e) => setUUsername(e.target.value.toLowerCase().replace(/[^a-z0-9._-]/g, ''))}
+                            placeholder="username_kasir"
+                            className="w-full px-3 py-2 bg-slate-800 disabled:bg-slate-900 border border-slate-700 disabled:border-slate-800 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-emerald-500"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-300 mb-1">
+                            Email
+                          </label>
+                          <input
+                            type="email"
+                            value={uEmail}
+                            onChange={(e) => setUEmail(e.target.value)}
+                            placeholder="user@toko.com"
+                            className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-300 mb-1">
+                            Peran (Role) <span className="text-rose-400">*</span>
+                          </label>
+                          <select
+                            value={uRole}
+                            onChange={(e) => setURole(e.target.value as Role)}
+                            className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500"
+                          >
+                            <option value="cashier">Kasir (POS & Transaksi)</option>
+                            <option value="branch_manager">Branch Manager (Cabang & Laporan)</option>
+                            <option value="inventory_staff">Staf Gudang (Inventaris & Stok)</option>
+                            <option value="owner">Owner (Akses Penuh Seluruh Cabang)</option>
+                          </select>
+                        </div>
+
+                        <div className="sm:col-span-2">
+                          <label className="block text-xs font-semibold text-slate-300 mb-1">
+                            {editingUser ? 'Password Baru (Kosongkan jika tidak diubah)' : 'Password Masuk *'}
+                          </label>
+                          <input
+                            type="password"
+                            required={!editingUser}
+                            value={uPassword}
+                            onChange={(e) => setUPassword(e.target.value)}
+                            placeholder={editingUser ? 'Minimal 6 karakter' : 'Minimal 6 karakter'}
+                            className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500"
+                          />
+                        </div>
+
+                        <div className="sm:col-span-2">
+                          <label className="block text-xs font-semibold text-slate-300 mb-2">
+                            Penugasan Cabang Toko
+                          </label>
+                          {branchesList.length === 0 ? (
+                            <div className="text-xs text-slate-500 italic">Belum ada cabang terdaftar.</div>
+                          ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-slate-800/40 p-3 rounded-xl border border-slate-700/60">
+                              {branchesList.map((b) => (
+                                <label key={b.id} className="flex items-center gap-2 text-xs text-slate-200 cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={uBranchIds.includes(b.id)}
+                                    onChange={(e) => {
+                                      if (e.target.checked) {
+                                        setUBranchIds([...uBranchIds, b.id]);
+                                      } else {
+                                        setUBranchIds(uBranchIds.filter((id) => id !== b.id));
+                                      }
+                                    }}
+                                    className="w-4 h-4 rounded text-emerald-600 bg-slate-900 border-slate-700 focus:ring-emerald-500"
+                                  />
+                                  <span>{b.name}</span>
+                                </label>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        {editingUser && (
+                          <div className="sm:col-span-2 flex items-center gap-2">
+                            <input
+                              id="user-active-toggle"
+                              type="checkbox"
+                              checked={uIsActive}
+                              onChange={(e) => setUIsActive(e.target.checked)}
+                              className="w-4 h-4 rounded text-emerald-600 bg-slate-900 border-slate-700 focus:ring-emerald-500"
+                            />
+                            <label htmlFor="user-active-toggle" className="text-xs text-slate-300 cursor-pointer">
+                              Akun ini aktif (dapat login ke sistem POS)
+                            </label>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="pt-3 flex justify-end gap-2 border-t border-slate-800">
+                        <button
+                          type="button"
+                          onClick={() => setUserModalOpen(false)}
+                          className="px-4 py-2 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800 text-xs font-semibold"
+                        >
+                          Batal
+                        </button>
+                        <button
+                          type="submit"
+                          disabled={userSaving}
+                          className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-bold shadow-md shadow-emerald-600/30 cursor-pointer active:scale-95 transition-all"
+                        >
+                          {userSaving ? 'Menyimpan...' : 'Simpan Pengguna'}
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              )}
+
+              {/* Delete Confirmation Modal */}
+              {deleteConfirmUser && (
+                <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+                  <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl animate-in zoom-in-95">
+                    <div className="flex items-center gap-3 text-rose-400">
+                      <div className="p-2.5 rounded-xl bg-rose-500/15 border border-rose-500/30">
+                        <Trash2 className="w-5 h-5" />
+                      </div>
+                      <h3 className="text-sm font-bold text-white">Konfirmasi Hapus Akun</h3>
+                    </div>
+
+                    <p className="text-xs text-slate-300 leading-relaxed">
+                      Apakah Anda yakin ingin menghapus pengguna <strong className="text-white">{deleteConfirmUser.full_name}</strong> (@{deleteConfirmUser.username})?
+                      <br /><br />
+                      <span className="text-slate-400">
+                        Jika pengguna memiliki catatan penjualan atau mutasi inventaris, sistem akan otomatis menonaktifkan akun untuk menjaga audit transaksi.
+                      </span>
+                    </p>
+
+                    <div className="flex items-center justify-end gap-2 pt-2">
+                      <button
+                        onClick={() => setDeleteConfirmUser(null)}
+                        className="px-3.5 py-2 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800 text-xs font-semibold"
+                      >
+                        Batal
+                      </button>
+                      <button
+                        onClick={() => handleDeleteUser(deleteConfirmUser)}
+                        disabled={deleteLoading}
+                        className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 disabled:opacity-50 text-white text-xs font-bold shadow-md shadow-rose-600/30 cursor-pointer active:scale-95 transition-all"
+                      >
+                        {deleteLoading ? 'Menghapus...' : 'Ya, Hapus'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

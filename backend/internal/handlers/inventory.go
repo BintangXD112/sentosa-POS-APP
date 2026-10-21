@@ -152,6 +152,13 @@ func AdjustStock(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to commit adjustment"})
 	}
 
+	database.LogAudit(c.Context(), bizID, &userID, "inventory.adjust", "product", req.ProductID.String(), map[string]interface{}{
+		"initial_stock": currentStock,
+		"new_stock":     req.NewStock,
+		"diff":          diff,
+		"notes":         notes,
+	}, c.IP(), c.Get("User-Agent"))
+
 	return c.JSON(fiber.Map{
 		"message":       "Stock successfully adjusted",
 		"product_id":    req.ProductID,

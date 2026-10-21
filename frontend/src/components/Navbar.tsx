@@ -3,6 +3,7 @@ import {
   Store, 
   ShoppingCart, 
   Boxes, 
+  Truck,
   Receipt, 
   BarChart3, 
   LogOut, 
@@ -81,6 +82,20 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab }) => {
               <Boxes className="w-4 h-4" />
               <span>Inventaris</span>
             </button>
+
+            {(user?.role === 'owner' || user?.role === 'branch_manager' || user?.role === 'inventory_staff') && (
+              <button
+                onClick={() => setActiveTab('suppliers')}
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium transition-all ${
+                  activeTab === 'suppliers'
+                    ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                }`}
+              >
+                <Truck className="w-4 h-4" />
+                <span>Supplier</span>
+              </button>
+            )}
 
             <button
               onClick={() => setActiveTab('sales')}

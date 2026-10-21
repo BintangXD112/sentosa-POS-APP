@@ -172,3 +172,30 @@ func GetUnits(c *fiber.Ctx) error {
 	}
 	return c.JSON(fiber.Map{"units": items})
 }
+
+// DeleteProduct — Hapus produk (Soft delete is_active = false)
+func DeleteProduct(c *fiber.Ctx) error {
+	bizID := c.Locals("business_id").(uuid.UUID)
+	productID, err := uuid.Parse(c.Params("id"))
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "ID produk tidak valid"})
+	}
+
+	res, err := database.Pool.Exec(c.Context(), `
+		UPDATE products
+		SET is_active = false, updated_at = NOW()
+		WHERE id = $1 AND business_id = $2
+	`, productID, bizID)
+
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Gagal menghapus produk: " + err.Error()})
+	}
+
+	if res.RowsAffected() == 0 {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Produk tidak ditemukan"})
+	}
+
+	return c.JSON(fiber.Map{
+		"message": "Produk berhasil dihapus dari sistem",
+	})
+}

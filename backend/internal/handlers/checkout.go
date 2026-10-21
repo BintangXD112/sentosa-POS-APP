@@ -337,5 +337,13 @@ func ProcessCheckout(c *fiber.Ctx) error {
 		})
 	}
 
+	database.LogAudit(c.Context(), bizID, &userID, "checkout.sale", "sale", saleID.String(), map[string]interface{}{
+		"receipt_number": receiptNumber,
+		"total_amount":   totalAmount,
+		"payment_method": req.Payment.Method,
+		"branch_name":    branchName,
+		"items_count":    len(receiptLines),
+	}, c.IP(), c.Get("User-Agent"))
+
 	return c.JSON(resp)
 }

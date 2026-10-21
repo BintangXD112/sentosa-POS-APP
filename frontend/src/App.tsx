@@ -8,7 +8,9 @@ import { PosView } from './views/PosView';
 import { InventoryView } from './views/InventoryView';
 import { SalesHistoryView } from './views/SalesHistoryView';
 import { ReportsView } from './views/ReportsView';
+import { SuppliersView } from './views/SuppliersView';
 import { SettingsView } from './views/SettingsView';
+import { AuditLogsView } from './views/AuditLogsView';
 
 type AuthPage = 'login' | 'forgot-password';
 
@@ -98,8 +100,10 @@ export function App() {
       >
         {activeTab === 'pos' && <PosView />}
         {activeTab === 'inventory' && <InventoryView />}
+        {activeTab === 'suppliers' && <SuppliersView />}
         {activeTab === 'sales' && <SalesHistoryView />}
         {activeTab === 'reports' && <ReportsView />}
+        {activeTab === 'audit-logs' && <AuditLogsView />}
         {activeTab === 'settings' && <SettingsView />}
       </main>
     </div>

@@ -126,10 +126,12 @@ export const PosView: React.FC = () => {
       // Use backend resolved LAN IP or direct pay_url so phones on the same Wi-Fi can open it
       let payUrl = res.pay_url;
       if (!payUrl) {
-        const host = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-          ? (res.server_ip || window.location.hostname)
-          : window.location.hostname;
-        payUrl = `http://${host}:8080/api/v1/qris/confirm/${sid}`;
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+          const host = res.server_ip || window.location.hostname;
+          payUrl = `http://${host}:8080/api/v1/qris/confirm/${sid}`;
+        } else {
+          payUrl = `${window.location.origin}/api/v1/qris/confirm/${sid}`;
+        }
       }
       setQrisPayUrl(payUrl);
 
