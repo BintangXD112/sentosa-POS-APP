@@ -1,0 +1,36 @@
+# Environment files — JANGAN di-commit ke git
+.env
+.env.local
+.env.*.local
+
+# Binary / compiled output
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Frontend build output (bisa di-regenerate)
+frontend/dist/
+frontend/node_modules/
+
+# Backend embedded dist (di-generate saat build)
+backend/dist/
+backend/cmd/server/dist/
+
+# Editor
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.DS_Store
+
+# Go build cache
+*.test
+*.out
+
+# Logs
+*.log
+logs/
