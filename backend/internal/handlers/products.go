@@ -3,11 +3,186 @@ package handlers
 import (
 	"fmt"
 	"strconv"
+	"strings"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"pos-backend/internal/database"
 )
+
+type CreateProductBody struct {
+	Name         string     `json:"name"`
+	SKU          string     `json:"sku"`
+	Barcode      string     `json:"barcode"`
+	SellingPrice int64      `json:"selling_price"`
+	CostPrice    int64      `json:"cost_price"`
+	CategoryID   string     `json:"category_id"`
+	UnitID       string     `json:"unit_id"`
+	InitialStock int        `json:"initial_stock"`
+	MinStockAlert int       `json:"min_stock_alert"`
+}
+
+// CreateProduct — Tambah produk baru + inisialisasi stok cabang
+func CreateProduct(c *fiber.Ctx) error {
+	bizID := c.Locals("business_id").(uuid.UUID)
+	branchID := c.Locals("branch_id").(uuid.UUID)
+	userID := c.Locals("user_id").(uuid.UUID)
+
+	var body CreateProductBody
+	if err := c.BodyParser(&body); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Payload tidak valid"})
+	}
+
+	name := strings.TrimSpace(body.Name)
+	sku := strings.TrimSpace(body.SKU)
+	if name == "" || sku == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Nama dan SKU wajib diisi"})
+	}
+	if body.SellingPrice < 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Harga jual tidak boleh negatif"})
+	}
+
+	// Parse optional UUIDs
+	var catID *uuid.UUID
+	if body.CategoryID != "" {
+		parsed, err := uuid.Parse(body.CategoryID)
+		if err == nil {
+			catID = &parsed
+		}
+	}
+	var unitID *uuid.UUID
+	if body.UnitID != "" {
+		parsed, err := uuid.Parse(body.UnitID)
+		if err == nil {
+			unitID = &parsed
+		}
+	}
+	barcode := strings.TrimSpace(body.Barcode)
+	var barcodePtr *string
+	if barcode != "" {
+		barcodePtr = &barcode
+	}
+
+	minStock := body.MinStockAlert
+	if minStock < 0 {
+		minStock = 5
+	}
+
+	productID := uuid.New()
+	now := time.Now()
+
+	// Insert product
+	_, err := database.Pool.Exec(c.Context(), `
+		INSERT INTO products (id, business_id, category_id, unit_id, name, sku, barcode, selling_price, cost_price, is_active, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, true, $10, $10)
+	`, productID, bizID, catID, unitID, name, sku, barcodePtr, body.SellingPrice, body.CostPrice, now)
+	if err != nil {
+		if strings.Contains(err.Error(), "uq_products_business_sku") {
+			return c.Status(fiber.StatusConflict).JSON(fiber.Map{"error": "SKU sudah digunakan oleh produk lain"})
+		}
+		if strings.Contains(err.Error(), "uq_products_business_barcode") {
+			return c.Status(fiber.StatusConflict).JSON(fiber.Map{"error": "Barcode sudah digunakan oleh produk lain"})
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Gagal menyimpan produk: " + err.Error()})
+	}
+
+	// Initialize branch inventory
+	_, err = database.Pool.Exec(c.Context(), `
+		INSERT INTO branch_inventory (id, business_id, branch_id, product_id, stock_quantity, min_stock_alert, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, NOW())
+		ON CONFLICT (branch_id, product_id) DO NOTHING
+	`, uuid.New(), bizID, branchID, productID, body.InitialStock, minStock)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Produk tersimpan tapi gagal inisialisasi stok: " + err.Error()})
+	}
+
+	// Record inventory movement if initial stock > 0
+	if body.InitialStock > 0 {
+		_, _ = database.Pool.Exec(c.Context(), `
+			INSERT INTO inventory_movements (id, business_id, branch_id, product_id, movement_type, quantity, balance_after, reference_id, notes, user_id, created_at)
+			VALUES ($1, $2, $3, $4, 'receiving', $5, $5, $6, 'Stok awal saat penambahan produk', $7, NOW())
+		`, uuid.New(), bizID, branchID, productID, body.InitialStock, "INIT-"+productID.String()[:8], userID)
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+		"message":    "Produk berhasil ditambahkan",
+		"product_id": productID,
+	})
+}
+
+// UpdateProduct — Edit data produk (nama, harga, kategori, dll) + update min_stock_alert
+func UpdateProduct(c *fiber.Ctx) error {
+	bizID := c.Locals("business_id").(uuid.UUID)
+	branchID := c.Locals("branch_id").(uuid.UUID)
+
+	productID, err := uuid.Parse(c.Params("id"))
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "ID produk tidak valid"})
+	}
+
+	var body CreateProductBody
+	if err := c.BodyParser(&body); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Payload tidak valid"})
+	}
+
+	name := strings.TrimSpace(body.Name)
+	sku := strings.TrimSpace(body.SKU)
+	if name == "" || sku == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Nama dan SKU wajib diisi"})
+	}
+
+	var catID *uuid.UUID
+	if body.CategoryID != "" {
+		parsed, err := uuid.Parse(body.CategoryID)
+		if err == nil {
+			catID = &parsed
+		}
+	}
+	var unitID *uuid.UUID
+	if body.UnitID != "" {
+		parsed, err := uuid.Parse(body.UnitID)
+		if err == nil {
+			unitID = &parsed
+		}
+	}
+	barcode := strings.TrimSpace(body.Barcode)
+	var barcodePtr *string
+	if barcode != "" {
+		barcodePtr = &barcode
+	}
+
+	res, err := database.Pool.Exec(c.Context(), `
+		UPDATE products SET
+			name = $1, sku = $2, barcode = $3,
+			selling_price = $4, cost_price = $5,
+			category_id = $6, unit_id = $7,
+			updated_at = NOW()
+		WHERE id = $8 AND business_id = $9
+	`, name, sku, barcodePtr, body.SellingPrice, body.CostPrice, catID, unitID, productID, bizID)
+	if err != nil {
+		if strings.Contains(err.Error(), "uq_products_business_sku") {
+			return c.Status(fiber.StatusConflict).JSON(fiber.Map{"error": "SKU sudah digunakan oleh produk lain"})
+		}
+		if strings.Contains(err.Error(), "uq_products_business_barcode") {
+			return c.Status(fiber.StatusConflict).JSON(fiber.Map{"error": "Barcode sudah digunakan oleh produk lain"})
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Gagal memperbarui produk: " + err.Error()})
+	}
+	if res.RowsAffected() == 0 {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Produk tidak ditemukan"})
+	}
+
+	// Update min_stock_alert in branch_inventory
+	if body.MinStockAlert >= 0 {
+		_, _ = database.Pool.Exec(c.Context(), `
+			UPDATE branch_inventory SET min_stock_alert = $1, updated_at = NOW()
+			WHERE branch_id = $2 AND product_id = $3
+		`, body.MinStockAlert, branchID, productID)
+	}
+
+	return c.JSON(fiber.Map{"message": "Produk berhasil diperbarui"})
+}
 
 type ProductItem struct {
 	ID           uuid.UUID  `json:"id"`

@@ -8,7 +8,11 @@ import {
   X, 
   Search, 
   FileText,
-  FileDown 
+  FileDown,
+  Plus,
+  PackagePlus,
+  Tag,
+  DollarSign
 } from 'lucide-react';
 import { apiRequest } from '../api/client';
 import { useAuthStore } from '../store/authStore';
@@ -26,6 +30,26 @@ interface InventoryItem {
   category_name?: string;
 }
 
+interface CategoryItem { id: string; name: string; }
+interface UnitItem { id: string; name: string; symbol: string; }
+
+interface ProductFormState {
+  name: string;
+  sku: string;
+  barcode: string;
+  selling_price: string;
+  cost_price: string;
+  category_id: string;
+  unit_id: string;
+  initial_stock: string;
+  min_stock_alert: string;
+}
+
+const emptyForm = (): ProductFormState => ({
+  name: '', sku: '', barcode: '', selling_price: '', cost_price: '0',
+  category_id: '', unit_id: '', initial_stock: '0', min_stock_alert: '5',
+});
+
 export const InventoryView: React.FC = () => {
   const { currentBranch, user } = useAuthStore();
   const [activeTab, setActiveTab] = useState<'stocks' | 'movements'>('stocks');
@@ -42,11 +66,21 @@ export const InventoryView: React.FC = () => {
   const [adjustError, setAdjustError] = useState<string | null>(null);
 
   const canAdjustStock = user?.role === 'owner' || user?.role === 'branch_manager' || user?.role === 'inventory_staff';
+  const canManageProducts = user?.role === 'owner' || user?.role === 'branch_manager' || user?.role === 'inventory_staff';
   const canDeleteProduct = user?.role === 'owner' || user?.role === 'branch_manager';
 
   // Delete Product Modal state
   const [deleteConfirmProduct, setDeleteConfirmProduct] = useState<InventoryItem | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+
+  // Add/Edit Product Modal
+  const [showProductModal, setShowProductModal] = useState(false);
+  const [editingProductId, setEditingProductId] = useState<string | null>(null);
+  const [productForm, setProductForm] = useState<ProductFormState>(emptyForm());
+  const [productFormError, setProductFormError] = useState<string | null>(null);
+  const [productFormLoading, setProductFormLoading] = useState(false);
+  const [categories, setCategories] = useState<CategoryItem[]>([]);
+  const [units, setUnits] = useState<UnitItem[]>([]);
 
   const handleDeleteProduct = async (item: InventoryItem) => {
     setDeleteLoading(true);
@@ -86,6 +120,115 @@ export const InventoryView: React.FC = () => {
       console.error(e);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchCategoriesAndUnits = async () => {
+    try {
+      const [catRes, unitRes] = await Promise.all([
+        apiRequest<{ categories: CategoryItem[] }>('/categories'),
+        apiRequest<{ units: UnitItem[] }>('/units'),
+      ]);
+      setCategories(catRes.categories || []);
+      setUnits(unitRes.units || []);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleOpenAdd = async () => {
+    await fetchCategoriesAndUnits();
+    setEditingProductId(null);
+    setProductForm(emptyForm());
+    setProductFormError(null);
+    setShowProductModal(true);
+  };
+
+  const handleOpenEdit = async (item: InventoryItem) => {
+    await fetchCategoriesAndUnits();
+    setEditingProductId(item.product_id);
+    // fetch product detail from /products to get cost_price + category/unit
+    try {
+      const res = await apiRequest<{ products: any[] }>(`/products?q=${encodeURIComponent(item.sku)}&limit=5`);
+      const prod = res.products?.find((p: any) => p.id === item.product_id);
+      setProductForm({
+        name: item.product_name,
+        sku: item.sku,
+        barcode: item.barcode || '',
+        selling_price: '', // will be filled from prod
+        cost_price: prod?.cost_price?.toString() || '0',
+        category_id: prod?.category_id || '',
+        unit_id: prod?.unit_id || '',
+        initial_stock: '',
+        min_stock_alert: item.min_stock_alert?.toString() || '5',
+      });
+      if (prod) {
+        setProductForm(prev => ({ ...prev, selling_price: prod.selling_price?.toString() || '' }));
+      }
+    } catch {
+      setProductForm({
+        name: item.product_name,
+        sku: item.sku,
+        barcode: item.barcode || '',
+        selling_price: '',
+        cost_price: '0',
+        category_id: '',
+        unit_id: '',
+        initial_stock: '',
+        min_stock_alert: item.min_stock_alert?.toString() || '5',
+      });
+    }
+    setProductFormError(null);
+    setShowProductModal(true);
+  };
+
+  const handleSaveProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const name = productForm.name.trim();
+    const sku = productForm.sku.trim();
+    const sellingPrice = parseInt(productForm.selling_price || '0', 10);
+    if (!name || !sku) {
+      setProductFormError('Nama produk dan SKU wajib diisi');
+      return;
+    }
+    if (isNaN(sellingPrice) || sellingPrice < 0) {
+      setProductFormError('Harga jual tidak valid');
+      return;
+    }
+
+    setProductFormLoading(true);
+    setProductFormError(null);
+    try {
+      const payload = {
+        name,
+        sku,
+        barcode: productForm.barcode.trim(),
+        selling_price: sellingPrice,
+        cost_price: parseInt(productForm.cost_price || '0', 10),
+        category_id: productForm.category_id,
+        unit_id: productForm.unit_id,
+        initial_stock: editingProductId ? 0 : parseInt(productForm.initial_stock || '0', 10),
+        min_stock_alert: parseInt(productForm.min_stock_alert || '5', 10),
+      };
+
+      if (editingProductId) {
+        await apiRequest(`/products/${editingProductId}`, {
+          method: 'PUT',
+          body: JSON.stringify(payload),
+        });
+      } else {
+        await apiRequest('/products', {
+          method: 'POST',
+          body: JSON.stringify(payload),
+        });
+      }
+
+      setShowProductModal(false);
+      loadStock();
+    } catch (err: any) {
+      setProductFormError(err.message || 'Gagal menyimpan produk');
+    } finally {
+      setProductFormLoading(false);
     }
   };
 
@@ -180,6 +323,18 @@ export const InventoryView: React.FC = () => {
               <span>Audit Mutasi Stok</span>
             </button>
           </div>
+
+          {/* Tambah Barang Button */}
+          {canManageProducts && (
+            <button
+              onClick={handleOpenAdd}
+              className="flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/20 transition-all cursor-pointer active:scale-95"
+              title="Tambah produk baru ke katalog"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Tambah Barang</span>
+            </button>
+          )}
 
           {/* Export PDF Button */}
           <button
@@ -280,6 +435,15 @@ export const InventoryView: React.FC = () => {
                       </div>
 
                       <div className="flex items-center gap-1.5">
+                        {canManageProducts && (
+                          <button
+                            onClick={() => handleOpenEdit(item)}
+                            className="p-1.5 rounded-xl bg-slate-800 hover:bg-indigo-950/40 text-slate-400 hover:text-indigo-300 border border-slate-700 active:scale-95 transition-all"
+                            title="Edit Produk"
+                          >
+                            <Tag className="w-3.5 h-3.5 text-indigo-400" />
+                          </button>
+                        )}
                         {canAdjustStock && (
                           <button
                             onClick={() => handleOpenAdjust(item)}
@@ -375,6 +539,15 @@ export const InventoryView: React.FC = () => {
                         </td>
                         <td className="px-4 py-3 text-right">
                           <div className="flex items-center justify-end gap-1.5">
+                            {canManageProducts && (
+                              <button
+                                onClick={() => handleOpenEdit(item)}
+                                className="p-1.5 rounded-lg bg-slate-800 hover:bg-indigo-950/40 text-slate-400 hover:text-indigo-300 transition-colors inline-flex items-center"
+                                title="Edit Produk"
+                              >
+                                <Tag className="w-3.5 h-3.5 text-indigo-400" />
+                              </button>
+                            )}
                             {canAdjustStock && (
                               <button
                                 onClick={() => handleOpenAdjust(item)}
@@ -692,6 +865,200 @@ export const InventoryView: React.FC = () => {
                 {deleteLoading ? 'Menghapus...' : 'Ya, Hapus'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add / Edit Product Modal */}
+      {showProductModal && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-xl max-h-[94vh] flex flex-col overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+            {/* Header */}
+            <div className="p-4 border-b border-slate-800 flex items-center justify-between flex-shrink-0">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-indigo-500/10 border border-indigo-500/20">
+                  <PackagePlus className="w-4 h-4 text-indigo-400" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white">
+                    {editingProductId ? 'Edit Data Produk' : 'Tambah Produk Baru'}
+                  </h3>
+                  <p className="text-[10px] text-slate-400 mt-0.5">
+                    {editingProductId ? 'Perbarui informasi produk di katalog' : 'Daftarkan produk baru ke katalog & stok cabang'}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowProductModal(false)}
+                className="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleSaveProduct} className="p-4 sm:p-5 space-y-4 overflow-y-auto flex-1">
+              {productFormError && (
+                <div className="p-3 bg-rose-500/15 border border-rose-500/30 rounded-xl text-rose-400 text-xs flex items-start gap-2">
+                  <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
+                  <span>{productFormError}</span>
+                </div>
+              )}
+
+              {/* Nama Produk */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  Nama Produk <span className="text-rose-400">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={productForm.name}
+                  onChange={(e) => setProductForm(p => ({ ...p, name: e.target.value }))}
+                  placeholder="Contoh: Aqua Botol 600ml"
+                  className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
+                  required
+                />
+              </div>
+
+              {/* SKU + Barcode */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                    SKU <span className="text-rose-400">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={productForm.sku}
+                    onChange={(e) => setProductForm(p => ({ ...p, sku: e.target.value }))}
+                    placeholder="Contoh: AQU-600"
+                    className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors font-mono"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">Barcode</label>
+                  <input
+                    type="text"
+                    value={productForm.barcode}
+                    onChange={(e) => setProductForm(p => ({ ...p, barcode: e.target.value }))}
+                    placeholder="Scan / ketik barcode"
+                    className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors font-mono"
+                  />
+                </div>
+              </div>
+
+              {/* Harga Jual + Harga Modal */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                    Harga Jual (Rp) <span className="text-rose-400">*</span>
+                  </label>
+                  <div className="relative">
+                    <DollarSign className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="number"
+                      min="0"
+                      value={productForm.selling_price}
+                      onChange={(e) => setProductForm(p => ({ ...p, selling_price: e.target.value }))}
+                      placeholder="0"
+                      className="w-full pl-8 pr-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors font-mono"
+                      required
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">Harga Modal (Rp)</label>
+                  <div className="relative">
+                    <DollarSign className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="number"
+                      min="0"
+                      value={productForm.cost_price}
+                      onChange={(e) => setProductForm(p => ({ ...p, cost_price: e.target.value }))}
+                      placeholder="0"
+                      className="w-full pl-8 pr-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors font-mono"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Kategori + Satuan */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">Kategori</label>
+                  <select
+                    value={productForm.category_id}
+                    onChange={(e) => setProductForm(p => ({ ...p, category_id: e.target.value }))}
+                    className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors"
+                  >
+                    <option value="">-- Tanpa Kategori --</option>
+                    {categories.map((c) => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">Satuan</label>
+                  <select
+                    value={productForm.unit_id}
+                    onChange={(e) => setProductForm(p => ({ ...p, unit_id: e.target.value }))}
+                    className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors"
+                  >
+                    <option value="">-- Tanpa Satuan --</option>
+                    {units.map((u) => (
+                      <option key={u.id} value={u.id}>{u.name} ({u.symbol})</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Stok Awal (hanya saat tambah baru) + Min Alert */}
+              <div className="grid grid-cols-2 gap-3">
+                {!editingProductId && (
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 mb-1.5">Stok Awal</label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={productForm.initial_stock}
+                      onChange={(e) => setProductForm(p => ({ ...p, initial_stock: e.target.value }))}
+                      className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors font-mono"
+                    />
+                    <p className="text-[10px] text-slate-500 mt-1">Tercatat sebagai mutasi 'receiving'</p>
+                  </div>
+                )}
+                <div className={editingProductId ? 'col-span-2' : ''}>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">Alert Stok Minimum</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={productForm.min_stock_alert}
+                    onChange={(e) => setProductForm(p => ({ ...p, min_stock_alert: e.target.value }))}
+                    className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors font-mono"
+                  />
+                  <p className="text-[10px] text-slate-500 mt-1">Muncul peringatan 'Stok Menipis' di bawah nilai ini</p>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="pt-2 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowProductModal(false)}
+                  className="px-4 py-2.5 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800 text-xs font-semibold transition-colors"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={productFormLoading}
+                  className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-xs font-bold shadow-md shadow-indigo-600/30 cursor-pointer active:scale-95 transition-all flex items-center gap-2"
+                >
+                  <PackagePlus className="w-3.5 h-3.5" />
+                  {productFormLoading ? 'Menyimpan...' : (editingProductId ? 'Simpan Perubahan' : 'Tambah Produk')}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

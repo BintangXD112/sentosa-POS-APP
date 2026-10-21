@@ -142,6 +142,8 @@ func main() {
 
 	// Catalog & Products
 	branchScoped.Get("/products", handlers.GetProducts)
+	branchScoped.Post("/products", middleware.RequireRoles("owner", "branch_manager", "inventory_staff"), handlers.CreateProduct)
+	branchScoped.Put("/products/:id", middleware.RequireRoles("owner", "branch_manager", "inventory_staff"), handlers.UpdateProduct)
 	branchScoped.Delete("/products/:id", middleware.RequireRoles("owner", "branch_manager"), handlers.DeleteProduct)
 	branchScoped.Get("/categories", handlers.GetCategories)
 	branchScoped.Get("/units", handlers.GetUnits)
