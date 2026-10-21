@@ -10,6 +10,8 @@ import {
   RefreshCw,
   ArrowLeft,
   CheckCircle2,
+  Clock,
+  X,
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 
@@ -23,6 +25,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onForgotPassword }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [rememberMe, setRememberMe] = useState(true);
 
   // 2FA State
   const [is2FA, setIs2FA] = useState(false);
@@ -35,7 +38,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onForgotPassword }) => {
   const [resendCooldown, setResendCooldown] = useState(0);
   const [resendNotice, setResendNotice] = useState<string | null>(null);
 
-  const { setAuth } = useAuthStore();
+  const { setAuth, sessionExpiredReason, setSessionExpiredReason } = useAuthStore();
 
   // Cooldown countdown
   useEffect(() => {
@@ -81,7 +84,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onForgotPassword }) => {
         setResendCooldown(60);
       } else {
         // Recognized trusted device
-        setAuth(data.token, data.user);
+        setAuth(data.token, data.user, rememberMe);
       }
     } catch (err: any) {
       setError(err.message);
@@ -129,7 +132,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onForgotPassword }) => {
         localStorage.setItem('sentosa_device_token', data.device_token);
       }
 
-      setAuth(data.token, data.user);
+      setAuth(data.token, data.user, trustDevice);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -281,6 +284,24 @@ export const LoginView: React.FC<LoginViewProps> = ({ onForgotPassword }) => {
           <div className="bg-slate-900/90 backdrop-blur-xl border border-slate-800 rounded-3xl p-6 sm:p-7 shadow-2xl shadow-black/60">
             <h2 className="text-sm font-bold text-white mb-4">Masuk ke Akun</h2>
 
+            {sessionExpiredReason && (
+              <div className="mb-4 p-3.5 bg-amber-500/10 border border-amber-500/30 rounded-2xl text-amber-300 text-xs flex items-start gap-2.5 animate-in fade-in slide-in-from-top-1 duration-200">
+                <Clock className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <span className="font-semibold block text-amber-200">Sesi Berakhir</span>
+                  <span className="text-slate-300 leading-relaxed">{sessionExpiredReason}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSessionExpiredReason(null)}
+                  className="text-slate-400 hover:text-white p-0.5 transition-colors cursor-pointer"
+                  aria-label="Tutup pesan"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+
             {error && (
               <div className="mb-4 p-3 bg-rose-500/10 border border-rose-500/25 rounded-xl text-rose-400 text-xs">
                 {error}
@@ -300,7 +321,10 @@ export const LoginView: React.FC<LoginViewProps> = ({ onForgotPassword }) => {
                     type="text"
                     autoComplete="username"
                     value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    onChange={(e) => {
+                      setUsername(e.target.value);
+                      if (sessionExpiredReason) setSessionExpiredReason(null);
+                    }}
                     placeholder="Masukkan username"
                     className="w-full pl-10 pr-4 py-2.5 bg-slate-800/80 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors"
                   />
@@ -319,7 +343,10 @@ export const LoginView: React.FC<LoginViewProps> = ({ onForgotPassword }) => {
                     type={showPassword ? 'text' : 'password'}
                     autoComplete="current-password"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      if (sessionExpiredReason) setSessionExpiredReason(null);
+                    }}
                     placeholder="Masukkan password"
                     className="w-full pl-10 pr-11 py-2.5 bg-slate-800/80 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors"
                   />
@@ -334,8 +361,17 @@ export const LoginView: React.FC<LoginViewProps> = ({ onForgotPassword }) => {
                 </div>
               </div>
 
-              {/* Forgot password */}
-              <div className="flex justify-end">
+              {/* Remember me & Forgot password */}
+              <div className="flex items-center justify-between text-xs pt-0.5">
+                <label className="flex items-center gap-2 cursor-pointer select-none text-slate-300 hover:text-white transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    className="w-4 h-4 rounded text-emerald-600 bg-slate-800 border-slate-700 focus:ring-emerald-500 cursor-pointer"
+                  />
+                  <span>Ingat sesi (Auto Login)</span>
+                </label>
                 <button
                   type="button"
                   onClick={onForgotPassword}

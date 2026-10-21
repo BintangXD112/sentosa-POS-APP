@@ -3,6 +3,7 @@ package auth
 import (
 	"errors"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -26,7 +27,18 @@ func getSecret() []byte {
 	return []byte(secret)
 }
 
+func GetTokenDuration() time.Duration {
+	hoursStr := os.Getenv("JWT_EXPIRY_HOURS")
+	if hoursStr != "" {
+		if h, err := strconv.Atoi(hoursStr); err == nil && h > 0 {
+			return time.Duration(h) * time.Hour
+		}
+	}
+	return 24 * time.Hour
+}
+
 func GenerateToken(userID, businessID uuid.UUID, username, role, fullName string) (string, error) {
+	duration := GetTokenDuration()
 	claims := Claims{
 		UserID:     userID,
 		BusinessID: businessID,
@@ -34,7 +46,7 @@ func GenerateToken(userID, businessID uuid.UUID, username, role, fullName string
 		Role:       role,
 		FullName:   fullName,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(duration)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			Subject:   userID.String(),
 		},

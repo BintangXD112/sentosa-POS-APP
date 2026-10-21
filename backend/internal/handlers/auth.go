@@ -228,11 +228,11 @@ func Me(c *fiber.Ctx) error {
 		SELECT u.id, b.name, u.username, u.email, u.full_name, u.role
 		FROM users u
 		JOIN businesses b ON u.business_id = b.id
-		WHERE u.id = $1 AND u.business_id = $2
+		WHERE u.id = $1 AND u.business_id = $2 AND u.is_active = true
 	`, userID, bizID).Scan(&user.ID, &user.BusinessName, &user.Username, &user.Email, &user.FullName, &user.Role)
 
 	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "User not found"})
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Sesi tidak valid atau akun telah dinonaktifkan"})
 	}
 
 	var branches []BranchResponse

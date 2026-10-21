@@ -203,7 +203,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div className={`border-t border-slate-800 p-3 ${collapsed ? 'flex justify-center' : ''}`}>
         {collapsed ? (
           <button
-            onClick={logout}
+            onClick={() => logout()}
             className="p-2 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
             title="Keluar"
           >
@@ -224,7 +224,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               )}
             </div>
             <button
-              onClick={logout}
+              onClick={() => logout()}
               className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors flex-shrink-0"
               title="Keluar"
             >

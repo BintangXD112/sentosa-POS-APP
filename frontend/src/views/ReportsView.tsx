@@ -5,14 +5,16 @@ import {
   ShoppingBag, 
   DollarSign, 
   Users, 
-  Award
+  Award,
+  FileDown
 } from 'lucide-react';
 import { apiRequest } from '../api/client';
 import { useAuthStore } from '../store/authStore';
+import { exportSalesReportPdf } from '../utils/pdfExport';
 import type { ReportData } from '../types';
 
 export const ReportsView: React.FC = () => {
-  const { currentBranch } = useAuthStore();
+  const { currentBranch, user } = useAuthStore();
   const [data, setData] = useState<ReportData | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -65,6 +67,17 @@ export const ReportsView: React.FC = () => {
     average_order_value: 0,
   };
 
+  const handleExportPdf = () => {
+    if (!data) return;
+    exportSalesReportPdf({
+      data,
+      branchName: currentBranch?.name,
+      businessName: user?.business_name || 'Sentosa Retail Group',
+      dateRange,
+      userName: user?.full_name || 'Petugas Kasir',
+    });
+  };
+
   return (
     <div className={`max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-5 sm:space-y-6 transition-opacity ${loading ? 'opacity-50' : 'opacity-100'}`}>
       {/* View Header */}
@@ -76,37 +89,51 @@ export const ReportsView: React.FC = () => {
           </p>
         </div>
 
-        {/* Date Preset Buttons */}
-        <div className="flex items-center gap-1 bg-slate-900 border border-slate-800 p-1 rounded-xl w-full sm:w-auto">
+        {/* Controls: Date Presets & Export PDF */}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Date Preset Buttons */}
+          <div className="flex items-center gap-1 bg-slate-900 border border-slate-800 p-1 rounded-xl w-full sm:w-auto">
+            <button
+              onClick={() => setDateRange('today')}
+              className={`flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-center cursor-pointer ${
+                dateRange === 'today'
+                  ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              Hari Ini
+            </button>
+            <button
+              onClick={() => setDateRange('7days')}
+              className={`flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-center cursor-pointer ${
+                dateRange === '7days'
+                  ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              7 Hari
+            </button>
+            <button
+              onClick={() => setDateRange('30days')}
+              className={`flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-center cursor-pointer ${
+                dateRange === '30days'
+                  ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              30 Hari
+            </button>
+          </div>
+
+          {/* Export PDF Button */}
           <button
-            onClick={() => setDateRange('today')}
-            className={`flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-center ${
-              dateRange === 'today'
-                ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30'
-                : 'text-slate-400 hover:text-white'
-            }`}
+            onClick={handleExportPdf}
+            disabled={!data || loading}
+            className="flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20 transition-all cursor-pointer active:scale-95 disabled:opacity-50"
+            title="Ekspor laporan ini ke format PDF siap cetak"
           >
-            Hari Ini
-          </button>
-          <button
-            onClick={() => setDateRange('7days')}
-            className={`flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-center ${
-              dateRange === '7days'
-                ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            7 Hari
-          </button>
-          <button
-            onClick={() => setDateRange('30days')}
-            className={`flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-center ${
-              dateRange === '30days'
-                ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            30 Hari
+            <FileDown className="w-4 h-4" />
+            <span>Export ke PDF</span>
           </button>
         </div>
       </div>

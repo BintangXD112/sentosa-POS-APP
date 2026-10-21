@@ -17,9 +17,12 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
-  Laptop
+  Laptop,
+  FileDown
 } from 'lucide-react';
 import { apiRequest } from '../api/client';
+import { useAuthStore } from '../store/authStore';
+import { exportAuditLogsPdf } from '../utils/pdfExport';
 
 interface AuditLogItem {
   id: string;
@@ -53,6 +56,7 @@ const CATEGORIES = [
 ];
 
 export const AuditLogsView: React.FC = () => {
+  const { user } = useAuthStore();
   const [logs, setLogs] = useState<AuditLogItem[]>([]);
   const [stats, setStats] = useState<AuditLogStats>({
     total_today: 0,
@@ -175,14 +179,32 @@ export const AuditLogsView: React.FC = () => {
           </div>
         </div>
 
-        <button
-          onClick={() => fetchLogs()}
-          disabled={loading}
-          className="self-start md:self-auto flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-medium text-slate-200 transition-all active:scale-95 disabled:opacity-50"
-        >
-          <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-emerald-400' : ''}`} />
-          Segarkan Data
-        </button>
+        <div className="flex items-center gap-2 self-start md:self-auto">
+          <button
+            onClick={() => fetchLogs()}
+            disabled={loading}
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-medium text-slate-200 transition-all cursor-pointer active:scale-95 disabled:opacity-50"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-emerald-400' : ''}`} />
+            Segarkan Data
+          </button>
+
+          <button
+            onClick={() =>
+              exportAuditLogsPdf({
+                logs,
+                businessName: user?.business_name || 'Sentosa Retail Group',
+                userName: user?.full_name || 'Administrator',
+              })
+            }
+            disabled={logs.length === 0 || loading}
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-lg shadow-emerald-600/20 transition-all cursor-pointer active:scale-95 disabled:opacity-50"
+            title="Ekspor log audit ke format PDF siap cetak"
+          >
+            <FileDown className="w-3.5 h-3.5" />
+            <span>Export PDF</span>
+          </button>
+        </div>
       </div>
 
       {/* Summary Stat Cards */}

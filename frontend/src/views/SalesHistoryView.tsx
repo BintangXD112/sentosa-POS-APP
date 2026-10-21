@@ -5,10 +5,12 @@ import {
   Printer, 
   X, 
   Ban, 
-  AlertTriangle
+  AlertTriangle,
+  FileDown
 } from 'lucide-react';
 import { apiRequest } from '../api/client';
 import { useAuthStore } from '../store/authStore';
+import { exportTransactionsListPdf } from '../utils/pdfExport';
 import type { SaleDetail, SaleSummary } from '../types';
 
 export const SalesHistoryView: FC = () => {
@@ -83,11 +85,30 @@ export const SalesHistoryView: FC = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
       {/* View Header */}
-      <div>
-        <h1 className="text-xl font-bold text-white tracking-tight">Riwayat Transaksi Penjualan</h1>
-        <p className="text-xs text-slate-400 mt-0.5">
-          Lihat kembali struk, cetak ulang transaksi, atau batalkan transaksi di {currentBranch?.name}
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-bold text-white tracking-tight">Riwayat Transaksi Penjualan</h1>
+          <p className="text-xs text-slate-400 mt-0.5">
+            Lihat kembali struk, cetak ulang transaksi, atau batalkan transaksi di {currentBranch?.name}
+          </p>
+        </div>
+
+        <button
+          onClick={() =>
+            exportTransactionsListPdf({
+              sales,
+              branchName: currentBranch?.name,
+              businessName: user?.business_name || 'Sentosa Retail Group',
+              userName: user?.full_name || 'Petugas Kasir',
+            })
+          }
+          disabled={sales.length === 0 || loading}
+          className="flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20 transition-all cursor-pointer active:scale-95 disabled:opacity-50 self-start sm:self-auto"
+          title="Ekspor rekap transaksi ini ke format PDF siap cetak"
+        >
+          <FileDown className="w-4 h-4" />
+          <span>Export Rekap ke PDF</span>
+        </button>
       </div>
 
       {/* Sales Table Card */}

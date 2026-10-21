@@ -7,10 +7,12 @@ import {
   Trash2,
   X, 
   Search, 
-  FileText 
+  FileText,
+  FileDown 
 } from 'lucide-react';
 import { apiRequest } from '../api/client';
 import { useAuthStore } from '../store/authStore';
+import { exportInventoryReportPdf } from '../utils/pdfExport';
 import type { InventoryMovement } from '../types';
 
 interface InventoryItem {
@@ -152,29 +154,49 @@ export const InventoryView: React.FC = () => {
           </p>
         </div>
 
-        {/* Tab Switcher */}
-        <div className="flex items-center gap-1 bg-slate-900 border border-slate-800 p-1 rounded-xl">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Tab Switcher */}
+          <div className="flex items-center gap-1 bg-slate-900 border border-slate-800 p-1 rounded-xl">
+            <button
+              onClick={() => setActiveTab('stocks')}
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                activeTab === 'stocks'
+                  ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <Boxes className="w-4 h-4" />
+              <span>Stok Produk</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('movements')}
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                activeTab === 'movements'
+                  ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <History className="w-4 h-4" />
+              <span>Audit Mutasi Stok</span>
+            </button>
+          </div>
+
+          {/* Export PDF Button */}
           <button
-            onClick={() => setActiveTab('stocks')}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-              activeTab === 'stocks'
-                ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30'
-                : 'text-slate-400 hover:text-white'
-            }`}
+            onClick={() =>
+              exportInventoryReportPdf({
+                inventory: filteredInventory,
+                branchName: currentBranch?.name,
+                businessName: user?.business_name || 'Sentosa Retail Group',
+                userName: user?.full_name || 'Petugas Inventaris',
+              })
+            }
+            disabled={inventory.length === 0 || loading}
+            className="flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20 transition-all cursor-pointer active:scale-95 disabled:opacity-50"
+            title="Ekspor laporan status stok ke format PDF siap cetak"
           >
-            <Boxes className="w-4 h-4" />
-            <span>Stok Produk</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('movements')}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-              activeTab === 'movements'
-                ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <History className="w-4 h-4" />
-            <span>Audit Mutasi Stok</span>
+            <FileDown className="w-4 h-4" />
+            <span>Export PDF</span>
           </button>
         </div>
       </div>

@@ -44,6 +44,19 @@ export async function apiRequest<T = any>(
     } catch {
       errData = { error: res.statusText };
     }
+
+    // Auto-logout if session has expired or token is invalid
+    // (excluding login/verification endpoints which naturally handle invalid credentials)
+    if (
+      res.status === 401 &&
+      !endpoint.startsWith('/auth/login') &&
+      !endpoint.startsWith('/auth/verify-2fa') &&
+      !endpoint.startsWith('/auth/resend-2fa') &&
+      !endpoint.startsWith('/auth/verify-reset-token')
+    ) {
+      useAuthStore.getState().logout('Sesi login Anda telah berakhir demi keamanan. Silakan login kembali.');
+    }
+
     throw new ApiError(res.status, errData.error || 'Terjadi kesalahan sistem', errData);
   }
 
