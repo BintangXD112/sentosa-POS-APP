@@ -44,11 +44,12 @@ export const SuppliersView: React.FC = () => {
   const [deleteConfirmSupplier, setDeleteConfirmSupplier] = useState<Supplier | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
-  // Inbound Restock Modal
+  // Inbound Restock Modal (Supports Multi-Item)
   const [restockModalOpen, setRestockModalOpen] = useState(false);
   const [restockSupplierId, setRestockSupplierId] = useState<string>('');
-  const [restockProductId, setRestockProductId] = useState<string>('');
-  const [restockQty, setRestockQty] = useState<number>(10);
+  const [restockItems, setRestockItems] = useState<
+    Array<{ id: string; productId: string; quantity: number }>
+  >([]);
   const [restockRef, setRestockRef] = useState<string>('');
   const [restockNotes, setRestockNotes] = useState<string>('');
   const [restockSaving, setRestockSaving] = useState(false);
@@ -193,13 +194,49 @@ export const SuppliersView: React.FC = () => {
 
   const handleOpenRestock = (preselectSupplierId?: string) => {
     setRestockSupplierId(preselectSupplierId || (suppliers.length > 0 ? suppliers[0].id : ''));
-    setRestockProductId(products.length > 0 ? products[0].id : '');
-    setRestockQty(10);
+    setRestockItems([
+      {
+        id: `item-${Date.now()}-1`,
+        productId: products.length > 0 ? products[0].id : '',
+        quantity: 10,
+      },
+    ]);
     setRestockRef(`PO-${Date.now().toString().slice(-6)}`);
     setRestockNotes('');
     setRestockError(null);
     setRestockSuccessMsg(null);
     setRestockModalOpen(true);
+  };
+
+  const handleAddRestockItem = () => {
+    const selectedIds = new Set(restockItems.map((it) => it.productId));
+    const available = products.find((p) => !selectedIds.has(p.id));
+    const nextProdId = available ? available.id : (products.length > 0 ? products[0].id : '');
+    setRestockItems((prev) => [
+      ...prev,
+      {
+        id: `item-${Date.now()}-${prev.length + 1}`,
+        productId: nextProdId,
+        quantity: 10,
+      },
+    ]);
+  };
+
+  const handleRemoveRestockItem = (id: string) => {
+    if (restockItems.length <= 1) return;
+    setRestockItems((prev) => prev.filter((it) => it.id !== id));
+  };
+
+  const handleUpdateRestockProduct = (id: string, productId: string) => {
+    setRestockItems((prev) =>
+      prev.map((it) => (it.id === id ? { ...it, productId } : it))
+    );
+  };
+
+  const handleUpdateRestockQty = (id: string, qty: number) => {
+    setRestockItems((prev) =>
+      prev.map((it) => (it.id === id ? { ...it, quantity: Math.max(1, qty) } : it))
+    );
   };
 
   const handleExecuteRestock = async (e: React.FormEvent) => {
@@ -208,13 +245,20 @@ export const SuppliersView: React.FC = () => {
       setRestockError('Cabang tujuan belum dipilih');
       return;
     }
-    if (!restockProductId) {
-      setRestockError('Pilih produk yang akan dipasok');
+    if (restockItems.length === 0) {
+      setRestockError('Pilih minimal satu barang untuk dipasok');
       return;
     }
-    if (restockQty <= 0) {
-      setRestockError('Jumlah pasokan harus lebih dari 0');
-      return;
+    for (let i = 0; i < restockItems.length; i++) {
+      const it = restockItems[i];
+      if (!it.productId) {
+        setRestockError(`Baris #${i + 1}: Silakan pilih produk terlebih dahulu`);
+        return;
+      }
+      if (!it.quantity || it.quantity <= 0) {
+        setRestockError(`Baris #${i + 1}: Jumlah pasokan harus lebih dari 0`);
+        return;
+      }
     }
 
     setRestockSaving(true);
@@ -224,26 +268,31 @@ export const SuppliersView: React.FC = () => {
     try {
       const res = await apiRequest<{
         message: string;
-        product_name: string;
-        new_stock: number;
-        added_qty: number;
+        total_items: number;
+        total_quantity: number;
+        items?: Array<{ product_name: string; new_stock: number; added_qty: number }>;
       }>('/suppliers/restock', {
         method: 'POST',
         body: JSON.stringify({
           supplier_id: restockSupplierId || undefined,
           branch_id: currentBranch.id,
-          product_id: restockProductId,
-          quantity: restockQty,
+          items: restockItems.map((it) => ({
+            product_id: it.productId,
+            quantity: it.quantity,
+          })),
           reference_id: restockRef,
           notes: restockNotes,
         }),
       });
 
       setRestockSuccessMsg(
-        `✓ ${res.message}! Sisa stok sekarang: ${res.new_stock} unit.`
+        `✓ ${res.message || 'Pasokan stok berhasil diproses'}!`
       );
       loadProducts();
       loadSuppliers();
+      if (activeTab === 'history') {
+        loadReceivingHistory();
+      }
       setTimeout(() => {
         setRestockModalOpen(false);
         setRestockSuccessMsg(null);
@@ -265,7 +314,6 @@ export const SuppliersView: React.FC = () => {
     );
   });
 
-  const selectedProductObj = products.find((p) => p.id === restockProductId);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
@@ -580,14 +628,19 @@ export const SuppliersView: React.FC = () => {
         </div>
       )}
 
-      {/* Restock Modal ("Pasok Stok") */}
+      {/* Restock Modal ("Pasok Stok Multi-Barang") */}
       {restockModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md max-h-[92vh] flex flex-col overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="p-4 border-b border-slate-800 flex items-center justify-between flex-shrink-0">
-              <div className="flex items-center gap-2">
-                <PackagePlus className="w-5 h-5 text-emerald-400" />
-                <h3 className="text-sm font-bold text-white">Penerimaan Pasokan Stok (Inbound)</h3>
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl max-h-[92vh] flex flex-col overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="p-4 border-b border-slate-800 flex items-center justify-between flex-shrink-0 bg-slate-900/90">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  <PackagePlus className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white">Penerimaan Pasokan Stok Multi-Barang</h3>
+                  <p className="text-[11px] text-slate-400">1x transaksi untuk menambah stok berbagai pilihan barang sekaligus</p>
+                </div>
               </div>
               <button
                 onClick={() => setRestockModalOpen(false)}
@@ -609,127 +662,217 @@ export const SuppliersView: React.FC = () => {
                 </div>
               )}
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Cabang Tujuan Penerimaan
-                </label>
-                <div className="px-3.5 py-2.5 bg-slate-800/60 border border-slate-700 rounded-xl text-xs text-white font-medium flex items-center gap-2">
-                  <Building2 className="w-4 h-4 text-emerald-400" />
-                  <span>{currentBranch?.name}</span>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Pilih Supplier / Vendor
-                </label>
-                <select
-                  value={restockSupplierId}
-                  onChange={(e) => setRestockSupplierId(e.target.value)}
-                  className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500"
-                >
-                  <option value="">-- Supplier Umum / Tanpa Vendor --</option>
-                  {suppliers.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name} {s.contact_person ? `(${s.contact_person})` : ''}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Pilih Produk yang Dipasok <span className="text-rose-400">*</span>
-                </label>
-                <select
-                  required
-                  value={restockProductId}
-                  onChange={(e) => setRestockProductId(e.target.value)}
-                  className="w-full px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500"
-                >
-                  <option value="">-- Pilih Produk --</option>
-                  {products.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name} (SKU: {p.sku}) — Stok saat ini: {p.stock} {p.unit_symbol || 'pcs'}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {selectedProductObj && (
-                <div className="grid grid-cols-2 gap-3 bg-slate-800/40 p-3 rounded-xl border border-slate-800 text-xs">
-                  <div>
-                    <span className="text-slate-400 block text-[11px]">Stok Saat Ini:</span>
-                    <span className="font-bold text-white font-mono text-sm">
-                      {selectedProductObj.stock} {selectedProductObj.unit_symbol || 'pcs'}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 block text-[11px]">Estimasi Stok Baru:</span>
-                    <span className="font-bold text-emerald-400 font-mono text-sm">
-                      {selectedProductObj.stock + (restockQty || 0)} {selectedProductObj.unit_symbol || 'pcs'}
-                    </span>
+              {/* General Inbound Metadata */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-800/40 p-3.5 rounded-xl border border-slate-800">
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                    Cabang Tujuan Penerimaan
+                  </label>
+                  <div className="px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white font-medium flex items-center gap-2">
+                    <Building2 className="w-3.5 h-3.5 text-emerald-400" />
+                    <span className="truncate">{currentBranch?.name || 'Cabang Aktif'}</span>
                   </div>
                 </div>
-              )}
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Jumlah Stok yang Masuk (Qty) <span className="text-rose-400">*</span>
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  required
-                  value={restockQty}
-                  onChange={(e) => setRestockQty(Math.max(1, Number(e.target.value)))}
-                  className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-lg font-mono font-bold text-white focus:outline-none focus:border-emerald-500"
-                />
-                <div className="flex gap-1.5 mt-2">
-                  {[5, 10, 25, 50, 100].map((delta) => (
-                    <button
-                      key={delta}
-                      type="button"
-                      onClick={() => setRestockQty((curr) => curr + delta)}
-                      className="flex-1 py-1 px-2 bg-slate-800/80 hover:bg-slate-700 border border-slate-700 rounded-lg text-xs font-mono text-slate-300 active:scale-95 transition-all"
-                    >
-                      +{delta}
-                    </button>
-                  ))}
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                    Pilih Supplier / Vendor
+                  </label>
+                  <select
+                    value={restockSupplierId}
+                    onChange={(e) => setRestockSupplierId(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-emerald-500"
+                  >
+                    <option value="">-- Supplier Umum / Tanpa Vendor --</option>
+                    {suppliers.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name} {s.contact_person ? `(${s.contact_person})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                    No. Surat Jalan / Faktur (Referensi)
+                  </label>
+                  <input
+                    type="text"
+                    value={restockRef}
+                    onChange={(e) => setRestockRef(e.target.value)}
+                    placeholder="Contoh: PO-202610-001"
+                    className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white font-mono placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                    Catatan Pasokan
+                  </label>
+                  <input
+                    type="text"
+                    value={restockNotes}
+                    onChange={(e) => setRestockNotes(e.target.value)}
+                    placeholder="Contoh: Pengiriman batch supplier, kondisi baik..."
+                    className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+                  />
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  No. Surat Jalan / No. Faktur (Referensi)
-                </label>
-                <input
-                  type="text"
-                  value={restockRef}
-                  onChange={(e) => setRestockRef(e.target.value)}
-                  placeholder="Contoh: PO-202610-001"
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-emerald-500"
-                />
+              {/* Items Table / List */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                  <div className="flex items-center gap-2">
+                    <Boxes className="w-4 h-4 text-emerald-400" />
+                    <h4 className="text-xs font-bold text-white uppercase tracking-wider">
+                      Daftar Barang yang Dipasok ({restockItems.length})
+                    </h4>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleAddRestockItem}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition-all shadow-md shadow-emerald-600/20 active:scale-95 cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Tambah Barang</span>
+                  </button>
+                </div>
+
+                <div className="space-y-3 max-h-[38vh] overflow-y-auto pr-1">
+                  {restockItems.map((item, idx) => {
+                    const prodObj = products.find((p) => p.id === item.productId);
+                    const currentStock = prodObj ? prodObj.stock : 0;
+                    const newEstimated = currentStock + (item.quantity || 0);
+                    const unit = prodObj?.unit_symbol || 'pcs';
+
+                    return (
+                      <div
+                        key={item.id}
+                        className="p-3.5 bg-slate-800/60 border border-slate-700/80 rounded-xl space-y-2.5 transition-colors hover:border-slate-600"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="w-5 h-5 rounded-full bg-slate-700 text-slate-300 font-mono text-[11px] font-bold flex items-center justify-center">
+                              {idx + 1}
+                            </span>
+                            <span className="text-xs font-semibold text-slate-200">
+                              Item #{idx + 1}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-3">
+                            {prodObj && (
+                              <div className="text-[11px] flex items-center gap-2 bg-slate-900/80 px-2.5 py-1 rounded-lg border border-slate-700">
+                                <span className="text-slate-400">
+                                  Stok: <strong className="text-white font-mono">{currentStock}</strong>
+                                </span>
+                                <span className="text-slate-500">→</span>
+                                <span className="text-emerald-400 font-semibold">
+                                  Est. Baru: <strong className="font-mono">{newEstimated} {unit}</strong>
+                                </span>
+                              </div>
+                            )}
+
+                            {restockItems.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveRestockItem(item.id)}
+                                className="p-1 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-950/30 transition-colors"
+                                title="Hapus Barang Ini"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-center">
+                          <div className="sm:col-span-8">
+                            <label className="block text-[10px] font-semibold text-slate-400 mb-1">
+                              Pilih Produk <span className="text-rose-400">*</span>
+                            </label>
+                            <select
+                              required
+                              value={item.productId}
+                              onChange={(e) => handleUpdateRestockProduct(item.id, e.target.value)}
+                              className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-emerald-500"
+                            >
+                              <option value="">-- Pilih Produk --</option>
+                              {products.map((p) => (
+                                <option key={p.id} value={p.id}>
+                                  {p.name} (SKU: {p.sku}) — Stok: {p.stock} {p.unit_symbol || 'pcs'}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div className="sm:col-span-4">
+                            <label className="block text-[10px] font-semibold text-slate-400 mb-1">
+                              Jumlah Masuk (Qty) <span className="text-rose-400">*</span>
+                            </label>
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => handleUpdateRestockQty(item.id, Math.max(1, item.quantity - 1))}
+                                className="w-8 h-8 rounded-lg bg-slate-900 hover:bg-slate-700 border border-slate-700 text-slate-300 font-bold text-xs flex items-center justify-center cursor-pointer active:scale-95"
+                              >
+                                -
+                              </button>
+                              <input
+                                type="number"
+                                min="1"
+                                required
+                                value={item.quantity}
+                                onChange={(e) =>
+                                  handleUpdateRestockQty(item.id, Math.max(1, Number(e.target.value)))
+                                }
+                                className="w-full py-1.5 px-2 bg-slate-900 border border-slate-700 rounded-lg text-center font-mono font-bold text-xs text-white focus:outline-none focus:border-emerald-500"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => handleUpdateRestockQty(item.id, item.quantity + 1)}
+                                className="w-8 h-8 rounded-lg bg-slate-900 hover:bg-slate-700 border border-slate-700 text-slate-300 font-bold text-xs flex items-center justify-center cursor-pointer active:scale-95"
+                              >
+                                +
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleAddRestockItem}
+                  className="w-full py-2 border border-dashed border-slate-700 hover:border-emerald-500/60 rounded-xl text-xs text-slate-400 hover:text-emerald-400 font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer bg-slate-800/20 hover:bg-slate-800/40"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>+ Tambah Barang Lain ke Transaksi Pasokan Ini</span>
+                </button>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Catatan Pasokan
-                </label>
-                <textarea
-                  value={restockNotes}
-                  onChange={(e) => setRestockNotes(e.target.value)}
-                  placeholder="Contoh: Pengiriman batch 1, kondisi baik..."
-                  rows={2}
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 resize-none"
-                />
+              {/* Total Summary Bar */}
+              <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center justify-between text-xs">
+                <div className="text-slate-300 font-medium">
+                  Ringkasan Pasokan Masuk:
+                </div>
+                <div className="flex items-center gap-4">
+                  <span className="text-slate-300">
+                    Total: <strong className="text-white font-mono">{restockItems.length}</strong> jenis barang
+                  </span>
+                  <span className="text-emerald-400 font-bold font-mono text-sm">
+                    {restockItems.reduce((acc, it) => acc + (Number(it.quantity) || 0), 0)} Unit
+                  </span>
+                </div>
               </div>
 
               <div className="pt-2 flex justify-end gap-2 border-t border-slate-800">
                 <button
                   type="button"
                   onClick={() => setRestockModalOpen(false)}
-                  className="px-4 py-2.5 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800 text-xs font-semibold"
+                  className="px-4 py-2.5 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800 text-xs font-semibold cursor-pointer"
                 >
                   Batal
                 </button>
@@ -739,13 +882,18 @@ export const SuppliersView: React.FC = () => {
                   className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-bold shadow-md shadow-emerald-600/30 cursor-pointer active:scale-95 transition-all inline-flex items-center gap-1.5"
                 >
                   <PackagePlus className="w-4 h-4" />
-                  <span>{restockSaving ? 'Menyimpan...' : 'Terima Pasokan Stok'}</span>
+                  <span>
+                    {restockSaving
+                      ? 'Menyimpan...'
+                      : `Terima Pasokan (${restockItems.length} Barang)`}
+                  </span>
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
+
 
       {/* Supplier Form Modal (Add / Edit) */}
       {supplierModalOpen && (

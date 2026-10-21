@@ -76,6 +76,13 @@ export const SettingsView: React.FC = () => {
 
   // Branch editing state
   const [editingBranch, setEditingBranch] = useState<Branch | null>(null);
+  const [isAddingBranch, setIsAddingBranch] = useState(false);
+  const [newBranchData, setNewBranchData] = useState({
+    name: '',
+    address: '',
+    phone: '',
+    is_active: true,
+  });
   const [branchSaving, setBranchSaving] = useState(false);
   const [branchMessage, setBranchMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -421,6 +428,54 @@ export const SettingsView: React.FC = () => {
       }, 1200);
     } catch (err: any) {
       setBranchMessage({ type: 'error', text: err.message || 'Gagal memperbarui cabang.' });
+    } finally {
+      setBranchSaving(false);
+    }
+  };
+
+  const handleCreateBranch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBranchMessage(null);
+
+    if (!newBranchData.name.trim()) {
+      setBranchMessage({ type: 'error', text: 'Nama cabang tidak boleh kosong.' });
+      return;
+    }
+
+    setBranchSaving(true);
+    try {
+      const res = await apiRequest<{ message: string; branch: Branch }>('/branches', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: newBranchData.name.trim(),
+          address: newBranchData.address.trim(),
+          phone: newBranchData.phone.trim(),
+          is_active: newBranchData.is_active,
+        }),
+      });
+
+      const newBranch = res.branch;
+      setBranchesList((prev) => [...prev, newBranch]);
+
+      // Update auth store user branches so header switcher has it immediately
+      if (user) {
+        const updatedBranches = [...(user.branches || []), newBranch];
+        updateUser({ ...user, branches: updatedBranches });
+      }
+
+      // If no branch was active, set it to the new branch
+      if (!currentBranch) {
+        setCurrentBranch(newBranch);
+      }
+
+      setBranchMessage({ type: 'success', text: res.message || 'Cabang baru berhasil ditambahkan!' });
+      setNewBranchData({ name: '', address: '', phone: '', is_active: true });
+      setTimeout(() => {
+        setIsAddingBranch(false);
+        setBranchMessage(null);
+      }, 1200);
+    } catch (err: any) {
+      setBranchMessage({ type: 'error', text: err.message || 'Gagal menambahkan cabang.' });
     } finally {
       setBranchSaving(false);
     }
@@ -828,7 +883,7 @@ export const SettingsView: React.FC = () => {
 
               {/* Branches Management */}
               <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
-                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
                   <div>
                     <h3 className="text-sm font-bold text-white flex items-center gap-2">
                       <Building2 className="w-4 h-4 text-emerald-400" />
@@ -838,8 +893,129 @@ export const SettingsView: React.FC = () => {
                       Kelola nama, alamat, dan nomor telepon setiap cabang yang terdaftar
                     </p>
                   </div>
-                  <span className="text-xs text-slate-400">Total: {branchesList.length} Cabang</span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs text-slate-400">Total: {branchesList.length} Cabang</span>
+                    {!isAddingBranch && !editingBranch && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsAddingBranch(true);
+                          setEditingBranch(null);
+                          setBranchMessage(null);
+                        }}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition-all shadow-md shadow-emerald-600/20 active:scale-95 cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Tambah Cabang</span>
+                      </button>
+                    )}
+                  </div>
                 </div>
+
+                {/* Form Tambah Cabang Baru */}
+                {isAddingBranch && (
+                  <form
+                    onSubmit={handleCreateBranch}
+                    className="bg-slate-800/70 border border-emerald-500/40 rounded-xl p-4 space-y-3 animate-in fade-in"
+                  >
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-xs font-bold text-emerald-400 uppercase tracking-wide flex items-center gap-1.5">
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Tambah Cabang Baru</span>
+                      </h4>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsAddingBranch(false);
+                          setBranchMessage(null);
+                        }}
+                        className="text-xs text-slate-400 hover:text-white"
+                      >
+                        Tutup
+                      </button>
+                    </div>
+
+                    {branchMessage && (
+                      <div
+                        className={`p-2.5 rounded-lg text-xs ${
+                          branchMessage.type === 'success'
+                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
+                            : 'bg-rose-500/10 text-rose-400 border border-rose-500/30'
+                        }`}
+                      >
+                        {branchMessage.text}
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                          Nama Cabang <span className="text-rose-400">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="Contoh: Cabang Sentosa Mall"
+                          value={newBranchData.name}
+                          onChange={(e) => setNewBranchData({ ...newBranchData, name: e.target.value })}
+                          className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-300 mb-1">Telepon Cabang</label>
+                        <input
+                          type="text"
+                          placeholder="Contoh: 0812-3456-7890"
+                          value={newBranchData.phone}
+                          onChange={(e) => setNewBranchData({ ...newBranchData, phone: e.target.value })}
+                          className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+                        />
+                      </div>
+                      <div className="sm:col-span-2">
+                        <label className="block text-[11px] font-semibold text-slate-300 mb-1">Alamat Cabang</label>
+                        <input
+                          type="text"
+                          placeholder="Contoh: Jl. Sudirman No. 12, Jakarta Pusat"
+                          value={newBranchData.address}
+                          onChange={(e) => setNewBranchData({ ...newBranchData, address: e.target.value })}
+                          className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+                        />
+                      </div>
+                      <div className="sm:col-span-2 flex items-center gap-2">
+                        <input
+                          id="new-branch-active-check"
+                          type="checkbox"
+                          checked={newBranchData.is_active}
+                          onChange={(e) => setNewBranchData({ ...newBranchData, is_active: e.target.checked })}
+                          className="w-4 h-4 rounded text-emerald-600 bg-slate-900 border-slate-700 focus:ring-emerald-500"
+                        />
+                        <label htmlFor="new-branch-active-check" className="text-xs text-slate-300 cursor-pointer">
+                          Cabang langsung aktif beroperasi
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-2">
+                      <button
+                        type="submit"
+                        disabled={branchSaving}
+                        className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs rounded-lg transition-colors cursor-pointer"
+                      >
+                        {branchSaving ? 'Menyimpan...' : 'Simpan Cabang Baru'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsAddingBranch(false);
+                          setBranchMessage(null);
+                        }}
+                        className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs rounded-lg"
+                      >
+                        Batal
+                      </button>
+                    </div>
+                  </form>
+                )}
 
                 {editingBranch && (
                   <form
@@ -971,6 +1147,7 @@ export const SettingsView: React.FC = () => {
                       <button
                         onClick={() => {
                           setEditingBranch(branch);
+                          setIsAddingBranch(false);
                           setBranchMessage(null);
                         }}
                         className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer flex-shrink-0"

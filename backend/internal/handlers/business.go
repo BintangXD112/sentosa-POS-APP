@@ -34,6 +34,13 @@ type UpdateBranchRequest struct {
 	IsActive bool   `json:"is_active"`
 }
 
+type CreateBranchRequest struct {
+	Name     string `json:"name"`
+	Address  string `json:"address"`
+	Phone    string `json:"phone"`
+	IsActive *bool  `json:"is_active"`
+}
+
 func GetBusiness(c *fiber.Ctx) error {
 	bizID := c.Locals("business_id").(uuid.UUID)
 
@@ -163,6 +170,64 @@ func UpdateBranch(c *fiber.Ctx) error {
 			"address":   req.Address,
 			"phone":     req.Phone,
 			"is_active": req.IsActive,
+		},
+	})
+}
+
+// CreateBranch — Tambah cabang / outlet baru (Owner only)
+func CreateBranch(c *fiber.Ctx) error {
+	bizID := c.Locals("business_id").(uuid.UUID)
+
+	var req CreateBranchRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Payload tidak valid"})
+	}
+
+	req.Name = strings.TrimSpace(req.Name)
+	if req.Name == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Nama cabang tidak boleh kosong"})
+	}
+
+	isActive := true
+	if req.IsActive != nil {
+		isActive = *req.IsActive
+	}
+
+	newID := uuid.New()
+	_, err := database.Pool.Exec(c.Context(), `
+		INSERT INTO branches (id, business_id, name, address, phone, is_active, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+	`, newID, bizID, req.Name, strings.TrimSpace(req.Address), strings.TrimSpace(req.Phone), isActive)
+
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Gagal menambahkan data cabang: " + err.Error()})
+	}
+
+	// Inisialisasi entri branch_inventory untuk semua produk yang ada di bisnis ini (stok awal 0)
+	_, _ = database.Pool.Exec(c.Context(), `
+		INSERT INTO branch_inventory (id, business_id, branch_id, product_id, stock_quantity, min_stock_alert)
+		SELECT gen_random_uuid(), business_id, $1, id, 0, 5
+		FROM products
+		WHERE business_id = $2
+		ON CONFLICT (branch_id, product_id) DO NOTHING
+	`, newID, bizID)
+
+	userID := c.Locals("user_id").(uuid.UUID)
+	database.LogAudit(c.Context(), bizID, &userID, "branch.create", "branch", newID.String(), map[string]interface{}{
+		"name":      req.Name,
+		"address":   req.Address,
+		"phone":     req.Phone,
+		"is_active": isActive,
+	}, c.IP(), c.Get("User-Agent"))
+
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+		"message": "Cabang baru berhasil ditambahkan",
+		"branch": BranchResponse{
+			ID:       newID,
+			Name:     req.Name,
+			Address:  strings.TrimSpace(req.Address),
+			Phone:    strings.TrimSpace(req.Phone),
+			IsActive: isActive,
 		},
 	})
 }

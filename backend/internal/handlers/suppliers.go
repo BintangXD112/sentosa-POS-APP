@@ -31,13 +31,27 @@ type CreateSupplierRequest struct {
 	Notes         string `json:"notes"`
 }
 
+type RestockItemInput struct {
+	ProductID uuid.UUID `json:"product_id"`
+	Quantity  int       `json:"quantity"`
+}
+
+type RestockItemResult struct {
+	ProductID    uuid.UUID `json:"product_id"`
+	ProductName  string    `json:"product_name"`
+	InitialStock int       `json:"initial_stock"`
+	AddedQty     int       `json:"added_qty"`
+	NewStock     int       `json:"new_stock"`
+}
+
 type RestockRequest struct {
-	SupplierID  *uuid.UUID `json:"supplier_id"`
-	BranchID    uuid.UUID  `json:"branch_id"`
-	ProductID   uuid.UUID  `json:"product_id"`
-	Quantity    int        `json:"quantity"`
-	ReferenceID string     `json:"reference_id"`
-	Notes       string     `json:"notes"`
+	SupplierID  *uuid.UUID         `json:"supplier_id"`
+	BranchID    uuid.UUID          `json:"branch_id"`
+	ProductID   *uuid.UUID         `json:"product_id,omitempty"` // For backwards compatibility
+	Quantity    *int               `json:"quantity,omitempty"`   // For backwards compatibility
+	Items       []RestockItemInput `json:"items,omitempty"`
+	ReferenceID string             `json:"reference_id"`
+	Notes       string             `json:"notes"`
 }
 
 // GetSuppliers — List all suppliers for this business
@@ -177,7 +191,7 @@ func DeleteSupplier(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{"message": "Supplier berhasil dihapus"})
 }
 
-// RestockFromSupplier — Add stock from supplier into branch inventory
+// RestockFromSupplier — Add stock from supplier into branch inventory (supports single or multi-item)
 func RestockFromSupplier(c *fiber.Ctx) error {
 	bizID := c.Locals("business_id").(uuid.UUID)
 	userID := c.Locals("user_id").(uuid.UUID)
@@ -187,8 +201,29 @@ func RestockFromSupplier(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Data payload tidak valid"})
 	}
 
-	if req.Quantity <= 0 {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Jumlah pasokan stok harus lebih dari 0"})
+	// Backwards compatibility for single item restock payload
+	if len(req.Items) == 0 && req.ProductID != nil && req.Quantity != nil {
+		req.Items = append(req.Items, RestockItemInput{
+			ProductID: *req.ProductID,
+			Quantity:  *req.Quantity,
+		})
+	}
+
+	if len(req.Items) == 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Pilih minimal satu barang untuk dipasok"})
+	}
+
+	// Consolidate duplicate products and validate quantity
+	mergedQty := make(map[uuid.UUID]int)
+	var orderedIDs []uuid.UUID
+	for _, it := range req.Items {
+		if it.Quantity <= 0 {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Jumlah pasokan setiap barang harus lebih dari 0"})
+		}
+		if _, exists := mergedQty[it.ProductID]; !exists {
+			orderedIDs = append(orderedIDs, it.ProductID)
+		}
+		mergedQty[it.ProductID] += it.Quantity
 	}
 
 	// Fetch supplier name if provided
@@ -199,13 +234,6 @@ func RestockFromSupplier(c *fiber.Ctx) error {
 		if err == nil {
 			supplierName = sName
 		}
-	}
-
-	// Fetch product name
-	var productName string
-	err := database.Pool.QueryRow(c.Context(), `SELECT name FROM products WHERE id = $1 AND business_id = $2`, req.ProductID, bizID).Scan(&productName)
-	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Produk tidak ditemukan"})
 	}
 
 	// Reference ID
@@ -227,69 +255,101 @@ func RestockFromSupplier(c *fiber.Ctx) error {
 	}
 	defer tx.Rollback(c.Context())
 
-	// Upsert branch inventory
-	var currentStock int
-	var invID uuid.UUID
-	err = tx.QueryRow(c.Context(), `
-		SELECT id, stock_quantity 
-		FROM branch_inventory 
-		WHERE branch_id = $1 AND product_id = $2
-		FOR UPDATE
-	`, req.BranchID, req.ProductID).Scan(&invID, &currentStock)
+	var processedItems []RestockItemResult
+	totalQty := 0
 
-	var newStock int
-	if err != nil {
-		// New inventory row
-		invID = uuid.New()
-		newStock = req.Quantity
-		_, err = tx.Exec(c.Context(), `
-			INSERT INTO branch_inventory (id, business_id, branch_id, product_id, stock_quantity)
-			VALUES ($1, $2, $3, $4, $5)
-		`, invID, bizID, req.BranchID, req.ProductID, newStock)
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Gagal membuat data stok: " + err.Error()})
-		}
-	} else {
-		newStock = currentStock + req.Quantity
-		_, err = tx.Exec(c.Context(), `
-			UPDATE branch_inventory 
-			SET stock_quantity = $1, updated_at = NOW() 
-			WHERE id = $2
-		`, newStock, invID)
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Gagal memperbarui stok"})
-		}
-	}
+	for _, prodID := range orderedIDs {
+		qty := mergedQty[prodID]
 
-	// Log movement
-	_, err = tx.Exec(c.Context(), `
-		INSERT INTO inventory_movements (
-			business_id, branch_id, product_id, movement_type, quantity, balance_after, reference_id, notes, user_id
-		) VALUES ($1, $2, $3, 'receiving', $4, $5, $6, $7, $8)
-	`, bizID, req.BranchID, req.ProductID, req.Quantity, newStock, refID, notes, userID)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Gagal mencatat mutasi stok: " + err.Error()})
+		// Fetch product name
+		var productName string
+		err := tx.QueryRow(c.Context(), `SELECT name FROM products WHERE id = $1 AND business_id = $2`, prodID, bizID).Scan(&productName)
+		if err != nil {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": fmt.Sprintf("Produk dengan ID %s tidak ditemukan", prodID)})
+		}
+
+		// Upsert branch inventory
+		var currentStock int
+		var invID uuid.UUID
+		err = tx.QueryRow(c.Context(), `
+			SELECT id, stock_quantity 
+			FROM branch_inventory 
+			WHERE branch_id = $1 AND product_id = $2
+			FOR UPDATE
+		`, req.BranchID, prodID).Scan(&invID, &currentStock)
+
+		var newStock int
+		if err != nil {
+			// New inventory row
+			invID = uuid.New()
+			newStock = qty
+			_, err = tx.Exec(c.Context(), `
+				INSERT INTO branch_inventory (id, business_id, branch_id, product_id, stock_quantity)
+				VALUES ($1, $2, $3, $4, $5)
+			`, invID, bizID, req.BranchID, prodID, newStock)
+			if err != nil {
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Gagal membuat data stok: " + err.Error()})
+			}
+		} else {
+			newStock = currentStock + qty
+			_, err = tx.Exec(c.Context(), `
+				UPDATE branch_inventory 
+				SET stock_quantity = $1, updated_at = NOW() 
+				WHERE id = $2
+			`, newStock, invID)
+			if err != nil {
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Gagal memperbarui stok"})
+			}
+		}
+
+		// Log movement
+		_, err = tx.Exec(c.Context(), `
+			INSERT INTO inventory_movements (
+				business_id, branch_id, product_id, movement_type, quantity, balance_after, reference_id, notes, user_id
+			) VALUES ($1, $2, $3, 'receiving', $4, $5, $6, $7, $8)
+		`, bizID, req.BranchID, prodID, qty, newStock, refID, notes, userID)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Gagal mencatat mutasi stok: " + err.Error()})
+		}
+
+		processedItems = append(processedItems, RestockItemResult{
+			ProductID:    prodID,
+			ProductName:  productName,
+			InitialStock: currentStock,
+			AddedQty:     qty,
+			NewStock:     newStock,
+		})
+		totalQty += qty
 	}
 
 	if err := tx.Commit(c.Context()); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Gagal menyimpan pasokan stok"})
 	}
 
-	database.LogAudit(c.Context(), bizID, &userID, "inventory.restock", "product", req.ProductID.String(), map[string]interface{}{
-		"supplier":  supplierName,
-		"product":   productName,
-		"quantity":  req.Quantity,
-		"new_stock": newStock,
-		"reference": refID,
+	database.LogAudit(c.Context(), bizID, &userID, "inventory.restock", "supplier", supplierName, map[string]interface{}{
+		"supplier":       supplierName,
+		"reference":      refID,
+		"total_items":    len(processedItems),
+		"total_quantity": totalQty,
 	}, c.IP(), c.Get("User-Agent"))
 
-	return c.JSON(fiber.Map{
-		"message":       fmt.Sprintf("Berhasil menambah %d stok untuk %s", req.Quantity, productName),
-		"product_name":  productName,
-		"supplier_name": supplierName,
-		"initial_stock": currentStock,
-		"added_qty":     req.Quantity,
-		"new_stock":     newStock,
-		"reference_id":  refID,
-	})
+	resp := fiber.Map{
+		"message":        fmt.Sprintf("Berhasil menambah pasokan %d barang (total %d unit)", len(processedItems), totalQty),
+		"supplier_name":  supplierName,
+		"reference_id":   refID,
+		"total_items":    len(processedItems),
+		"total_quantity": totalQty,
+		"items":          processedItems,
+	}
+
+	// Legacy single-item fields
+	if len(processedItems) == 1 {
+		resp["product_name"] = processedItems[0].ProductName
+		resp["initial_stock"] = processedItems[0].InitialStock
+		resp["added_qty"] = processedItems[0].AddedQty
+		resp["new_stock"] = processedItems[0].NewStock
+	}
+
+	return c.JSON(resp)
 }
+
