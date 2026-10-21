@@ -13,9 +13,8 @@
 frontend/dist/
 frontend/node_modules/
 
-# Backend embedded dist (di-generate saat build)
+# Backend embedded dist
 backend/dist/
-backend/cmd/server/dist/
 
 # Editor
 .vscode/
