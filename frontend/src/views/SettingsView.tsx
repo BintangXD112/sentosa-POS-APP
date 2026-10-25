@@ -72,6 +72,9 @@ export const SettingsView: React.FC = () => {
   const [bizPhone, setBizPhone] = useState('');
   const [bizAddress, setBizAddress] = useState('');
   const [bizReceiptFooter, setBizReceiptFooter] = useState('');
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(true);
+  const [twoFactorSaving, setTwoFactorSaving] = useState(false);
+  const [twoFactorMessage, setTwoFactorMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [branchesList, setBranchesList] = useState<Branch[]>([]);
 
   // Branch editing state
@@ -98,6 +101,7 @@ export const SettingsView: React.FC = () => {
           phone: string;
           address: string;
           receipt_footer: string;
+          two_factor_enabled: boolean;
         };
         branches: Branch[];
       }>('/business');
@@ -108,6 +112,7 @@ export const SettingsView: React.FC = () => {
         setBizPhone(data.business.phone || '');
         setBizAddress(data.business.address || '');
         setBizReceiptFooter(data.business.receipt_footer || '');
+        setTwoFactorEnabled(data.business.two_factor_enabled !== false);
       }
       if (data.branches) {
         setBranchesList(data.branches);
@@ -149,6 +154,28 @@ export const SettingsView: React.FC = () => {
   const [uRole, setURole] = useState<Role>('cashier');
   const [uIsActive, setUIsActive] = useState(true);
   const [uBranchIds, setUBranchIds] = useState<string[]>([]);
+
+  const handleToggleTwoFactor = async () => {
+    if (!isOwner || twoFactorSaving) return;
+    const nextValue = !twoFactorEnabled;
+    setTwoFactorSaving(true);
+    setTwoFactorMessage(null);
+    try {
+      await apiRequest('/business/two-factor', {
+        method: 'PUT',
+        body: JSON.stringify({ enabled: nextValue }),
+      });
+      setTwoFactorEnabled(nextValue);
+      setTwoFactorMessage({
+        type: 'success',
+        text: nextValue ? 'A2F OTP berhasil diaktifkan.' : 'A2F OTP berhasil dinonaktifkan.',
+      });
+    } catch (err: any) {
+      setTwoFactorMessage({ type: 'error', text: err?.message || 'Gagal menyimpan pengaturan A2F.' });
+    } finally {
+      setTwoFactorSaving(false);
+    }
+  };
 
   const fetchUsers = async () => {
     if (!isOwner) return;
@@ -1511,6 +1538,41 @@ export const SettingsView: React.FC = () => {
           {/* SECURITY SECTION */}
           {activeSection === 'security' && (
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-5">
+              {isOwner && (
+                <div className="pb-5 border-b border-slate-800">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <h2 className="text-sm font-bold text-white">Autentikasi Dua Faktor (A2F)</h2>
+                      <p className="text-xs text-slate-400 mt-1 max-w-xl">
+                        Atur apakah semua pengguna di toko ini wajib memasukkan OTP email saat login dari perangkat baru.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={twoFactorEnabled}
+                      aria-label="Aktifkan autentikasi dua faktor"
+                      onClick={handleToggleTwoFactor}
+                      disabled={twoFactorSaving}
+                      className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 disabled:opacity-60 ${twoFactorEnabled ? 'bg-emerald-600' : 'bg-slate-700'}`}
+                    >
+                      <span className={`absolute top-1 size-4 rounded-full bg-white shadow transition-transform ${twoFactorEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                    </button>
+                  </div>
+                  <div className="mt-3 flex items-center gap-2 text-xs">
+                    <Shield className={twoFactorEnabled ? 'w-4 h-4 text-emerald-400' : 'w-4 h-4 text-slate-500'} />
+                    <span className={twoFactorEnabled ? 'text-emerald-300' : 'text-slate-400'}>
+                      {twoFactorEnabled ? 'Aktif — OTP diperlukan untuk perangkat baru.' : 'Nonaktif — login tidak meminta OTP.'}
+                    </span>
+                  </div>
+                  {twoFactorMessage && (
+                    <div className={`mt-3 text-xs ${twoFactorMessage.type === 'success' ? 'text-emerald-400' : 'text-rose-400'}`}>
+                      {twoFactorMessage.text}
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div>
                 <h2 className="text-sm font-bold text-white">Ubah Password</h2>
                 <p className="text-xs text-slate-400 mt-1">Gunakan password yang kuat dan unik.</p>

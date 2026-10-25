@@ -1,0 +1,2 @@
+ALTER TABLE businesses
+  ADD COLUMN IF NOT EXISTS two_factor_enabled BOOLEAN NOT NULL DEFAULT TRUE;

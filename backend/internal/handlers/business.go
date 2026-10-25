@@ -10,13 +10,14 @@ import (
 )
 
 type BusinessResponse struct {
-	ID            uuid.UUID `json:"id"`
-	Name          string    `json:"name"`
-	Currency      string    `json:"currency"`
-	Phone         string    `json:"phone"`
-	Address       string    `json:"address"`
-	ReceiptFooter string    `json:"receipt_footer"`
-	CreatedAt     time.Time `json:"created_at"`
+	ID              uuid.UUID `json:"id"`
+	Name            string    `json:"name"`
+	Currency        string    `json:"currency"`
+	Phone           string    `json:"phone"`
+	Address         string    `json:"address"`
+	ReceiptFooter   string    `json:"receipt_footer"`
+	TwoFactorEnabled bool     `json:"two_factor_enabled"`
+	CreatedAt       time.Time `json:"created_at"`
 }
 
 type UpdateBusinessRequest struct {
@@ -46,7 +47,7 @@ func GetBusiness(c *fiber.Ctx) error {
 
 	var biz BusinessResponse
 	err := database.Pool.QueryRow(c.Context(), `
-		SELECT id, name, currency, COALESCE(phone, ''), COALESCE(address, ''), COALESCE(receipt_footer, ''), created_at
+		SELECT id, name, currency, COALESCE(phone, ''), COALESCE(address, ''), COALESCE(receipt_footer, ''), COALESCE(two_factor_enabled, TRUE), created_at
 		FROM businesses
 		WHERE id = $1
 	`, bizID).Scan(&biz.ID, &biz.Name, &biz.Currency, &biz.Phone, &biz.Address, &biz.ReceiptFooter, &biz.CreatedAt)
@@ -122,6 +123,33 @@ func UpdateBusiness(c *fiber.Ctx) error {
 			"receipt_footer": req.ReceiptFooter,
 		},
 	})
+}
+
+type UpdateTwoFactorRequest struct {
+	Enabled bool `json:"enabled"`
+}
+
+func UpdateTwoFactorSetting(c *fiber.Ctx) error {
+	bizID := c.Locals("business_id").(uuid.UUID)
+	userID := c.Locals("user_id").(uuid.UUID)
+
+	var req UpdateTwoFactorRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Payload pengaturan A2F tidak valid"})
+	}
+
+	_, err := database.Pool.Exec(c.Context(), `
+		UPDATE businesses SET two_factor_enabled = $1, updated_at = NOW() WHERE id = $2
+	`, req.Enabled, bizID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Gagal menyimpan pengaturan A2F"})
+	}
+
+	database.LogAudit(c.Context(), bizID, &userID, "business.two_factor.update", "business", bizID.String(), map[string]interface{}{
+		"enabled": req.Enabled,
+	}, c.IP(), c.Get("User-Agent"))
+
+	return c.JSON(fiber.Map{"message": "Pengaturan A2F berhasil diperbarui", "enabled": req.Enabled})
 }
 
 func UpdateBranch(c *fiber.Ctx) error {

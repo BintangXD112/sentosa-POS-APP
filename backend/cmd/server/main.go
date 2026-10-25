@@ -118,6 +118,7 @@ func main() {
 	// Business & Store Settings
 	protected.Get("/business", handlers.GetBusiness)
 	protected.Put("/business", middleware.RequireRoles("owner"), handlers.UpdateBusiness)
+	protected.Put("/business/two-factor", middleware.RequireRoles("owner"), handlers.UpdateTwoFactorSetting)
 	protected.Post("/branches", middleware.RequireRoles("owner"), handlers.CreateBranch)
 	protected.Put("/branches/:id", middleware.RequireRoles("owner"), handlers.UpdateBranch)
 

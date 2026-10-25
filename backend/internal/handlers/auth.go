@@ -107,7 +107,12 @@ func Login(c *fiber.Ctx) error {
 		}
 	}
 
-	if !isTrusted {
+	var twoFactorEnabled bool
+	if err := database.Pool.QueryRow(c.Context(), `SELECT COALESCE(two_factor_enabled, TRUE) FROM businesses WHERE id = $1`, user.BusinessID).Scan(&twoFactorEnabled); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Gagal membaca pengaturan A2F"})
+	}
+
+	if !isTrusted && twoFactorEnabled {
 		// Device is unrecognized or 30-day trust expired: require 2FA OTP verification
 		otpCode := Generate6DigitCode()
 		codeHash := HashOTP(otpCode)
