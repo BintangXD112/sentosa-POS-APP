@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { BarChart3, Boxes, ClipboardList, CreditCard, ShieldCheck, ShoppingCart, Truck, Users } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { ArrowUpRight, BarChart3, CreditCard, PackageCheck, ShoppingCart } from 'lucide-react';
 import { apiRequest } from '../api/client';
 import { useAuthStore } from '../store/authStore';
 import type { ReportData } from '../types';
@@ -9,67 +9,63 @@ const roleContent = {
     title: 'Ringkasan Bisnis',
     subtitle: 'Pantau performa seluruh cabang dan aktivitas bisnis Anda.',
     cards: [
-      { label: 'Penjualan hari ini', value: 'Rp 0', icon: CreditCard },
-      { label: 'Transaksi hari ini', value: '0', icon: ShoppingCart },
-      { label: 'Cabang aktif', value: '0', icon: BarChart3 },
-      { label: 'Pengguna aktif', value: '0', icon: Users },
+      { label: 'Penjualan periode', value: 'Rp 0', icon: CreditCard, key: 'sales' },
+      { label: 'Transaksi periode', value: '0', icon: ShoppingCart, key: 'orders' },
+      { label: 'Produk terjual', value: '0', icon: PackageCheck, key: 'items' },
+      { label: 'Rata-rata transaksi', value: 'Rp 0', icon: BarChart3, key: 'average' },
     ],
-    actions: ['Lihat laporan penjualan', 'Kelola pengguna', 'Tinjau log audit'],
   },
   branch_manager: {
     title: 'Ringkasan Cabang',
     subtitle: 'Pantau penjualan, stok, dan aktivitas operasional cabang.',
     cards: [
-      { label: 'Penjualan hari ini', value: 'Rp 0', icon: CreditCard },
-      { label: 'Transaksi hari ini', value: '0', icon: ShoppingCart },
-      { label: 'Stok menipis', value: '0', icon: Boxes },
-      { label: 'Pesanan pasokan', value: '0', icon: Truck },
+      { label: 'Penjualan periode', value: 'Rp 0', icon: CreditCard, key: 'sales' },
+      { label: 'Transaksi periode', value: '0', icon: ShoppingCart, key: 'orders' },
+      { label: 'Produk terjual', value: '0', icon: PackageCheck, key: 'items' },
+      { label: 'Rata-rata transaksi', value: 'Rp 0', icon: BarChart3, key: 'average' },
     ],
-    actions: ['Buka laporan cabang', 'Periksa stok menipis', 'Kelola pasokan'],
   },
   cashier: {
     title: 'Dashboard Kasir',
     subtitle: 'Siap melayani transaksi dengan cepat dan akurat.',
     cards: [
-      { label: 'Penjualan saya hari ini', value: 'Rp 0', icon: CreditCard },
-      { label: 'Transaksi saya', value: '0', icon: ShoppingCart },
-      { label: 'Item di keranjang', value: '0', icon: ClipboardList },
+      { label: 'Penjualan periode', value: 'Rp 0', icon: CreditCard, key: 'sales' },
+      { label: 'Transaksi periode', value: '0', icon: ShoppingCart, key: 'orders' },
+      { label: 'Produk terjual', value: '0', icon: PackageCheck, key: 'items' },
     ],
-    actions: ['Mulai transaksi baru', 'Lihat riwayat transaksi'],
   },
   inventory_staff: {
     title: 'Dashboard Gudang',
     subtitle: 'Kelola ketersediaan produk dan pergerakan stok.',
     cards: [
-      { label: 'Total produk', value: '0', icon: Boxes },
-      { label: 'Stok menipis', value: '0', icon: ShieldCheck },
-      { label: 'Pasokan berjalan', value: '0', icon: Truck },
+      { label: 'Penjualan periode', value: 'Rp 0', icon: CreditCard, key: 'sales' },
+      { label: 'Produk terjual', value: '0', icon: PackageCheck, key: 'items' },
+      { label: 'Transaksi periode', value: '0', icon: ShoppingCart, key: 'orders' },
     ],
-    actions: ['Kelola inventaris', 'Kelola supplier'],
   },
 } as const;
+
+const ranges = [
+  { label: '1 hari', days: 1 },
+  { label: '3 hari', days: 3 },
+  { label: '7 hari', days: 7 },
+  { label: '14 hari', days: 14 },
+  { label: '1 bulan', days: 30 },
+];
 
 export const DashboardView: React.FC<{ onNavigate: (tab: string) => void }> = ({ onNavigate }) => {
   const { user, currentBranch } = useAuthStore();
   const content = roleContent[user?.role as keyof typeof roleContent] ?? roleContent.cashier;
-  const [selectedRange, setSelectedRange] = useState('1 hari');
+  const [selectedRange, setSelectedRange] = useState('7 hari');
   const [report, setReport] = useState<ReportData | null>(null);
   const [loading, setLoading] = useState(false);
-  const ranges = [
-    { label: '1 hari', days: 1 },
-    { label: '3 hari', days: 3 },
-    { label: '7 hari', days: 7 },
-    { label: '14 hari', days: 14 },
-    { label: '1 bulan', days: 30 },
-  ];
+  const selectedDays = ranges.find((range) => range.label === selectedRange)?.days ?? 7;
 
   useEffect(() => {
-    if (!currentBranch || (user?.role !== 'owner' && user?.role !== 'branch_manager')) return;
-
+    if (!currentBranch) return;
     const loadDashboard = async () => {
       setLoading(true);
       try {
-        const selectedDays = ranges.find((range) => range.label === selectedRange)?.days ?? 1;
         const end = new Date();
         const start = new Date(end);
         start.setDate(start.getDate() - (selectedDays - 1));
@@ -79,10 +75,7 @@ export const DashboardView: React.FC<{ onNavigate: (tab: string) => void }> = ({
           const day = String(date.getDate()).padStart(2, '0');
           return `${year}-${month}-${day}`;
         };
-
-        const data = await apiRequest<ReportData>(
-          `/reports/summary?start_date=${toDate(start)}&end_date=${toDate(end)}`,
-        );
+        const data = await apiRequest<ReportData>(`/reports/summary?start_date=${toDate(start)}&end_date=${toDate(end)}`);
         setReport(data);
       } catch (error) {
         console.error('Gagal memuat ringkasan dashboard:', error);
@@ -91,80 +84,75 @@ export const DashboardView: React.FC<{ onNavigate: (tab: string) => void }> = ({
         setLoading(false);
       }
     };
-
     loadDashboard();
-  }, [currentBranch, selectedRange, user?.role]);
+  }, [currentBranch, selectedDays]);
 
+  const formatIDR = (value: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(value);
   const summary = report?.summary;
-  const formatIDR = (value: number) => new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    maximumFractionDigits: 0,
-  }).format(value);
   const cards = content.cards.map((card) => {
     if (!summary) return card;
-    if (card.label.includes('Penjualan')) return { ...card, value: formatIDR(summary.total_sales) };
-    if (card.label.includes('Transaksi')) return { ...card, value: String(summary.total_orders) };
-    return card;
+    const values: Record<string, string> = {
+      sales: formatIDR(summary.total_sales),
+      orders: String(summary.total_orders),
+      items: String(summary.items_sold),
+      average: formatIDR(summary.average_order_value),
+    };
+    return { ...card, value: values[card.key] };
   });
+  const paymentTotal = (summary?.cash_sales ?? 0) + (summary?.non_cash_sales ?? 0);
+  const cashPercent = paymentTotal ? Math.round(((summary?.cash_sales ?? 0) / paymentTotal) * 100) : 0;
+  const topProducts = report?.top_products?.slice(0, 5) ?? [];
+  const maxProductQty = Math.max(...topProducts.map((product) => product.total_qty), 1);
+  const performers = report?.cashier_performance?.slice(0, 5) ?? [];
+  const maxPerformance = Math.max(...performers.map((person) => person.total_sales), 1);
+  const quickActions = useMemo(() => {
+    const actions = user?.role === 'owner'
+      ? [['reports', 'Lihat laporan penjualan'], ['settings', 'Pengaturan aplikasi'], ['audit-logs', 'Tinjau log audit']]
+      : user?.role === 'inventory_staff'
+        ? [['inventory', 'Kelola inventaris'], ['suppliers', 'Kelola supplier']]
+        : user?.role === 'cashier'
+          ? [['pos', 'Mulai transaksi baru'], ['sales-history', 'Lihat riwayat transaksi']]
+          : [['reports', 'Buka laporan cabang'], ['inventory', 'Periksa inventaris'], ['suppliers', 'Kelola pasokan']];
+    return actions;
+  }, [user?.role]);
 
   return (
-    <section className="min-h-screen bg-slate-950 p-4 sm:p-6 lg:p-8">
+    <section className="min-h-screen bg-stone-50 p-4 text-slate-900 sm:p-6 lg:p-8">
       <div className="mx-auto max-w-7xl">
-        <div className="mb-8 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <header className="mb-7 flex flex-col gap-5 border-b border-slate-200 pb-6 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-400">Sentosa POS</p>
-            <h1 className="text-2xl font-black tracking-tight text-white sm:text-3xl">{content.title}</h1>
-            <p className="mt-1 text-sm text-slate-400">Halo, {user?.full_name}. {content.subtitle}</p>
+            <p className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-emerald-700">Sentosa POS / Overview</p>
+            <h1 className="text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">{content.title}</h1>
+            <p className="mt-2 max-w-2xl text-sm text-slate-500">Halo, {user?.full_name}. {content.subtitle}</p>
           </div>
-          <div className="flex items-center gap-2 self-start sm:self-auto">
+          <div className="flex flex-wrap items-center gap-2">
+            {currentBranch && <div className="rounded-md border border-slate-200 bg-white px-3 py-2 text-xs text-slate-500">Cabang <strong className="text-slate-900">{currentBranch.name}</strong></div>}
             <label htmlFor="dashboard-range" className="sr-only">Rentang waktu dashboard</label>
-            <select
-              id="dashboard-range"
-              value={selectedRange}
-              onChange={(event) => setSelectedRange(event.target.value)}
-              className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-xs font-semibold text-slate-200 outline-none transition focus:border-emerald-500"
-            >
+            <select id="dashboard-range" value={selectedRange} onChange={(event) => setSelectedRange(event.target.value)} className="rounded-md border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100">
               {ranges.map((range) => <option key={range.label} value={range.label}>{range.label}</option>)}
             </select>
-            {currentBranch && <div className="rounded-lg border border-slate-800 bg-slate-900 px-3 py-2 text-xs text-slate-300">Cabang: <strong className="text-white">{currentBranch.name}</strong></div>}
           </div>
+        </header>
+
+        <div className="mb-6 grid gap-px overflow-hidden rounded-lg border border-slate-200 bg-slate-200 sm:grid-cols-2 xl:grid-cols-4">
+          {cards.map(({ label, value, icon: Icon }) => <div key={label} className="bg-white p-5"><div className="flex items-center justify-between"><span className="text-xs font-medium text-slate-500">{label}</span><Icon className="h-4 w-4 text-emerald-700" /></div><p className="mt-4 text-2xl font-bold tracking-tight text-slate-950">{value}</p><p className="mt-1 text-[11px] text-slate-400">{selectedRange} terakhir</p></div>)}
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {cards.map(({ label, value, icon: Icon }) => (
-            <div key={label} className="rounded-2xl border border-slate-800 bg-slate-900 p-5 shadow-xl shadow-black/10">
-              <div className="mb-5 flex items-center justify-between"><span className="text-xs font-medium text-slate-400">{label}</span><div className="rounded-xl bg-emerald-500/10 p-2 text-emerald-400"><Icon className="h-4 w-4" /></div></div>
-              <p className="text-2xl font-black text-white">{value}</p>
-              <p className="mt-2 text-[11px] text-slate-500">Data akan mengikuti cabang dan periode aktif</p>
-            </div>
-          ))}
+        <div className="grid gap-6 lg:grid-cols-[1.45fr_1fr]">
+          <div className="rounded-lg border border-slate-200 bg-white p-5 sm:p-6">
+            <div className="flex items-start justify-between"><div><p className="text-xs font-bold uppercase tracking-wider text-slate-400">Produk terlaris</p><h2 className="mt-1 text-lg font-bold text-slate-950">Performa penjualan</h2></div>{loading && <span className="text-xs text-emerald-700">Memuat...</span>}</div>
+            {topProducts.length ? <div className="mt-6 flex flex-col gap-4">{topProducts.map((product) => <div key={product.product_id}><div className="mb-1 flex justify-between gap-3 text-xs"><span className="truncate font-medium text-slate-700">{product.product_name}</span><span className="shrink-0 text-slate-500">{product.total_qty} unit</span></div><div className="h-2 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-emerald-600 transition-all" style={{ width: `${Math.max((product.total_qty / maxProductQty) * 100, 4)}%` }} /></div></div>)}</div> : <div className="mt-6 flex min-h-32 items-center justify-center rounded-md border border-dashed border-slate-200 text-sm text-slate-400">Belum ada data penjualan pada periode ini.</div>}
+          </div>
+
+          <div className="rounded-lg border border-slate-200 bg-white p-5 sm:p-6"><p className="text-xs font-bold uppercase tracking-wider text-slate-400">Metode pembayaran</p><h2 className="mt-1 text-lg font-bold text-slate-950">Komposisi pendapatan</h2><div className="mt-7 flex items-center gap-5"><div className="relative grid size-28 shrink-0 place-items-center rounded-full" style={{ background: `conic-gradient(#059669 ${cashPercent}%, #cbd5e1 ${cashPercent}% 100%)` }}><div className="grid size-20 place-items-center rounded-full bg-white"><span className="text-xl font-bold text-slate-950">{cashPercent}%</span></div></div><div className="flex flex-col gap-3 text-xs"><div><span className="mr-2 inline-block size-2 rounded-full bg-emerald-600" />Tunai <strong className="ml-2 text-slate-900">{formatIDR(summary?.cash_sales ?? 0)}</strong></div><div><span className="mr-2 inline-block size-2 rounded-full bg-slate-300" />Non-tunai <strong className="ml-2 text-slate-900">{formatIDR(summary?.non_cash_sales ?? 0)}</strong></div></div></div><div className="mt-7 border-t border-slate-100 pt-4 text-xs text-slate-500">Total pendapatan <strong className="float-right text-slate-900">{formatIDR(summary?.total_sales ?? 0)}</strong></div></div>
         </div>
 
-        <div className="mt-6 grid gap-6 lg:grid-cols-[1.4fr_1fr]">
-          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-sm font-bold text-white">Aktivitas {selectedRange.toLowerCase()}</h2>
-                <p className="mt-1 text-xs text-slate-500">Ringkasan berubah otomatis saat periode diganti.</p>
-              </div>
-              {loading && <span className="text-xs text-emerald-400">Memuat...</span>}
-            </div>
-            {report?.top_products?.length ? (
-              <div className="mt-5 flex flex-col gap-2">
-                {report.top_products.slice(0, 5).map((product) => (
-                  <div key={product.product_id} className="flex items-center justify-between rounded-lg bg-slate-800/60 px-3 py-2 text-xs">
-                    <span className="truncate text-slate-300">{product.product_name}</span>
-                    <span className="ml-3 font-semibold text-emerald-400">{product.total_qty} terjual</span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="mt-5 flex min-h-24 items-center justify-center rounded-xl border border-dashed border-slate-800 text-center text-sm text-slate-500">Belum ada aktivitas untuk periode ini.</div>
-            )}
-          </div>
-          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6"><h2 className="text-sm font-bold text-white">Akses cepat</h2><div className="mt-4 flex flex-col gap-2">{content.actions.map((action) => { const tab = action.includes('laporan') ? 'reports' : action.includes('stok') || action.includes('inventaris') ? 'inventory' : action.includes('pasokan') || action.includes('supplier') ? 'suppliers' : action.includes('transaksi') ? 'pos' : action.includes('audit') ? 'audit-logs' : 'settings'; return <button key={action} onClick={() => onNavigate(tab)} className="flex items-center justify-between rounded-xl border border-slate-800 px-3 py-3 text-left text-xs font-medium text-slate-300 transition hover:border-emerald-500/40 hover:bg-slate-800 hover:text-white"><span>{action}</span><span className="text-emerald-400">→</span></button>; })}</div></div>
+        <div className="mt-6 grid gap-6 lg:grid-cols-[1.45fr_1fr]">
+          <div className="rounded-lg border border-slate-200 bg-white p-5 sm:p-6"><p className="text-xs font-bold uppercase tracking-wider text-slate-400">Ringkasan operasional</p><div className="mt-4 grid gap-3 sm:grid-cols-3"><div className="rounded-md bg-stone-50 p-4"><p className="text-xs text-slate-500">Total transaksi</p><p className="mt-2 text-xl font-bold text-slate-950">{summary?.total_orders ?? 0}</p></div><div className="rounded-md bg-stone-50 p-4"><p className="text-xs text-slate-500">Item terjual</p><p className="mt-2 text-xl font-bold text-slate-950">{summary?.items_sold ?? 0}</p></div><div className="rounded-md bg-stone-50 p-4"><p className="text-xs text-slate-500">Nilai rata-rata</p><p className="mt-2 text-xl font-bold text-slate-950">{formatIDR(summary?.average_order_value ?? 0)}</p></div></div></div>
+          <div className="rounded-lg border border-slate-200 bg-white p-5 sm:p-6"><p className="text-xs font-bold uppercase tracking-wider text-slate-400">Akses cepat</p><div className="mt-3 flex flex-col gap-1">{quickActions.map(([tab, label]) => <button key={tab} onClick={() => onNavigate(tab)} className="flex items-center justify-between border-b border-slate-100 py-3 text-left text-sm font-medium text-slate-700 transition hover:text-emerald-700"><span>{label}</span><ArrowUpRight className="h-4 w-4" /></button>)}</div></div>
         </div>
+
+        {user?.role === 'owner' && performers.length > 0 && <div className="mt-6 rounded-lg border border-slate-200 bg-white p-5 sm:p-6"><p className="text-xs font-bold uppercase tracking-wider text-slate-400">Performa kasir</p><h2 className="mt-1 text-lg font-bold text-slate-950">Kontribusi penjualan</h2><div className="mt-5 grid gap-4 md:grid-cols-2">{performers.map((person) => <div key={person.cashier_name}><div className="mb-1 flex justify-between text-xs"><span className="font-medium text-slate-700">{person.cashier_name}</span><span className="text-slate-500">{formatIDR(person.total_sales)}</span></div><div className="h-2 rounded-full bg-slate-100"><div className="h-full rounded-full bg-slate-700" style={{ width: `${Math.max((person.total_sales / maxPerformance) * 100, 4)}%` }} /></div></div>)}</div></div>}
       </div>
     </section>
   );
