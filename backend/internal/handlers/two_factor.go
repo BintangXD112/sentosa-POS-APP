@@ -118,8 +118,8 @@ func SendTwoFactorEmail(toEmail, toName, otpCode, ip, userAgent string) error {
 
 	fromAddress := strings.TrimSpace(os.Getenv("RESEND_FROM_EMAIL"))
 	if fromAddress == "" {
-		// Resend's sandbox sender only works for the Resend account email. Production must set a sender on a verified domain.
-		fromAddress = "Sentosa POS Security <onboarding@resend.dev>"
+		// The Resend sandbox only delivers to the account owner's email. A verified domain sender is required for real users.
+		return fmt.Errorf("RESEND_FROM_EMAIL belum dikonfigurasi; gunakan, misalnya, Sentosa POS <no-reply@domain-terverifikasi-Resend.com>")
 	}
 
 	payload := map[string]any{

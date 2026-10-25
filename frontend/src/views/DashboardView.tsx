@@ -49,7 +49,7 @@ const roleContent = {
 
 export const DashboardView: React.FC<{ onNavigate: (tab: string) => void }> = ({ onNavigate }) => {
   const { user, currentBranch } = useAuthStore();
-  const content = roleContent[user?.role ?? 'cashier'];
+  const content = roleContent[user?.role as keyof typeof roleContent] ?? roleContent.cashier;
 
   return (
     <section className="min-h-screen bg-slate-950 p-4 sm:p-6 lg:p-8">

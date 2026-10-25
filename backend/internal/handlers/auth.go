@@ -126,13 +126,16 @@ func Login(c *fiber.Ctx) error {
 			emailStr = *user.Email
 		}
 
-		// Send 2FA email asynchronously
+		// Send synchronously so Resend errors reach the UI instead of being lost in a goroutine.
 		if emailStr != "" {
-			go func() {
-				if sendErr := SendTwoFactorEmail(emailStr, user.FullName, otpCode, ip, userAgent); sendErr != nil {
-					fmt.Printf("[2FA] gagal mengirim OTP ke %s: %v\\n", emailStr, sendErr)
-				}
-			}()
+			if sendErr := SendTwoFactorEmail(emailStr, user.FullName, otpCode, ip, userAgent); sendErr != nil {
+				fmt.Printf("[2FA] gagal mengirim OTP ke %s: %v\\n", emailStr, sendErr)
+				return c.Status(fiber.StatusBadGateway).JSON(fiber.Map{
+					"error": "OTP gagal dikirim. Pastikan RESEND_FROM_EMAIL menggunakan alamat dari domain Resend yang sudah terverifikasi.",
+				})
+			}
+		} else {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Alamat email akun belum diatur"})
 		}
 
 		database.LogAudit(c.Context(), user.BusinessID, &user.ID, "auth.login_2fa_challenge_issued", "user", user.ID.String(), map[string]interface{}{
