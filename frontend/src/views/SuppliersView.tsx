@@ -14,6 +14,8 @@ import {
   Boxes,
   History,
   ArrowDownLeft,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { apiRequest } from '../api/client';
 import { useAuthStore } from '../store/authStore';
@@ -27,6 +29,8 @@ export const SuppliersView: React.FC = () => {
   const [receivingMovements, setReceivingMovements] = useState<InventoryMovement[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const pageSize = 9;
 
   // Supplier Add/Edit Modal
   const [supplierModalOpen, setSupplierModalOpen] = useState(false);
@@ -313,7 +317,18 @@ export const SuppliersView: React.FC = () => {
       (s.email && s.email.toLowerCase().includes(q))
     );
   });
+  const activeItems = activeTab === 'suppliers' ? filteredSuppliers : receivingMovements;
+  const totalPages = Math.max(1, Math.ceil(activeItems.length / pageSize));
+  const paginatedSuppliers = filteredSuppliers.slice((page - 1) * pageSize, page * pageSize);
+  const paginatedReceiving = receivingMovements.slice((page - 1) * pageSize, page * pageSize);
 
+  useEffect(() => {
+    setPage(1);
+  }, [activeTab, searchQuery]);
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
@@ -457,8 +472,9 @@ export const SuppliersView: React.FC = () => {
               )}
             </div>
           ) : (
+            <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredSuppliers.map((s) => (
+              {paginatedSuppliers.map((s) => (
                 <div
                   key={s.id}
                   className="bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-2xl p-5 flex flex-col justify-between shadow-sm transition-all hover:shadow-lg"
@@ -553,6 +569,15 @@ export const SuppliersView: React.FC = () => {
                 </div>
               ))}
             </div>
+            <div className="mt-4 flex items-center justify-between border-t border-slate-800 pt-3 text-xs text-slate-400">
+              <span>Menampilkan {paginatedSuppliers.length} dari {filteredSuppliers.length} supplier</span>
+              <div className="flex items-center gap-2">
+                <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1 || loading} className="rounded-lg border border-slate-700 bg-slate-800 p-1.5 disabled:cursor-not-allowed disabled:opacity-40" aria-label="Halaman supplier sebelumnya"><ChevronLeft className="h-4 w-4" /></button>
+                <span className="font-mono text-slate-300">{page}/{totalPages}</span>
+                <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages || loading} className="rounded-lg border border-slate-700 bg-slate-800 p-1.5 disabled:cursor-not-allowed disabled:opacity-40" aria-label="Halaman supplier berikutnya"><ChevronRight className="h-4 w-4" /></button>
+              </div>
+            </div>
+            </>
           )}
         </div>
       )}
@@ -595,7 +620,7 @@ export const SuppliersView: React.FC = () => {
                     </td>
                   </tr>
                 ) : (
-                  receivingMovements.map((m) => (
+                  paginatedReceiving.map((m) => (
                     <tr key={m.id} className="hover:bg-slate-800/30 transition-colors">
                       <td className="px-4 py-3 text-slate-400 text-[11px] whitespace-nowrap font-sans">
                         {new Date(m.created_at).toLocaleString('id-ID')}
@@ -624,6 +649,14 @@ export const SuppliersView: React.FC = () => {
                 )}
               </tbody>
             </table>
+          </div>
+          <div className="flex items-center justify-between border-t border-slate-800 px-4 py-3 text-xs text-slate-400">
+            <span>Menampilkan {paginatedReceiving.length} dari {receivingMovements.length} riwayat</span>
+            <div className="flex items-center gap-2">
+              <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1 || loading} className="rounded-lg border border-slate-700 bg-slate-800 p-1.5 disabled:cursor-not-allowed disabled:opacity-40" aria-label="Halaman pasokan sebelumnya"><ChevronLeft className="h-4 w-4" /></button>
+              <span className="font-mono text-slate-300">{page}/{totalPages}</span>
+              <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages || loading} className="rounded-lg border border-slate-700 bg-slate-800 p-1.5 disabled:cursor-not-allowed disabled:opacity-40" aria-label="Halaman pasokan berikutnya"><ChevronRight className="h-4 w-4" /></button>
+            </div>
           </div>
         </div>
       )}

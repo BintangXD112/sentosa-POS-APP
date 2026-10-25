@@ -12,7 +12,9 @@ import {
   Plus,
   PackagePlus,
   Tag,
-  DollarSign
+  DollarSign,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { apiRequest } from '../api/client';
 import { useAuthStore } from '../store/authStore';
@@ -57,6 +59,8 @@ export const InventoryView: React.FC = () => {
   const [movements, setMovements] = useState<InventoryMovement[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
 
   // Stock Adjustment Modal
   const [adjustingItem, setAdjustingItem] = useState<InventoryItem | null>(null);
@@ -285,6 +289,18 @@ export const InventoryView: React.FC = () => {
       (item.barcode && item.barcode.toLowerCase().includes(q))
     );
   });
+  const activeItems = activeTab === 'stocks' ? filteredInventory : movements;
+  const totalPages = Math.max(1, Math.ceil(activeItems.length / pageSize));
+  const paginatedInventory = filteredInventory.slice((page - 1) * pageSize, page * pageSize);
+  const paginatedMovements = movements.slice((page - 1) * pageSize, page * pageSize);
+
+  useEffect(() => {
+    setPage(1);
+  }, [activeTab, searchQuery]);
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
@@ -387,7 +403,7 @@ export const InventoryView: React.FC = () => {
                 Tidak ada data produk ditemukan.
               </div>
             ) : (
-              filteredInventory.map((item) => {
+              paginatedInventory.map((item) => {
                 const isLow = item.stock_quantity <= item.min_stock_alert;
                 const isOut = item.stock_quantity <= 0;
 
@@ -497,7 +513,7 @@ export const InventoryView: React.FC = () => {
                     </td>
                   </tr>
                 ) : (
-                  filteredInventory.map((item) => {
+                  paginatedInventory.map((item) => {
                     const isLow = item.stock_quantity <= item.min_stock_alert;
                     const isOut = item.stock_quantity <= 0;
 
@@ -575,6 +591,14 @@ export const InventoryView: React.FC = () => {
               </tbody>
             </table>
           </div>
+          <div className="flex items-center justify-between border-t border-slate-800 px-4 py-3 text-xs text-slate-400">
+            <span>Menampilkan {paginatedInventory.length} dari {filteredInventory.length} produk</span>
+            <div className="flex items-center gap-2">
+              <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1 || loading} className="rounded-lg border border-slate-700 bg-slate-800 p-1.5 disabled:cursor-not-allowed disabled:opacity-40" aria-label="Halaman inventaris sebelumnya"><ChevronLeft className="h-4 w-4" /></button>
+              <span className="font-mono text-slate-300">{page}/{totalPages}</span>
+              <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages || loading} className="rounded-lg border border-slate-700 bg-slate-800 p-1.5 disabled:cursor-not-allowed disabled:opacity-40" aria-label="Halaman inventaris berikutnya"><ChevronRight className="h-4 w-4" /></button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -600,7 +624,7 @@ export const InventoryView: React.FC = () => {
                 Belum ada riwayat mutasi stok.
               </div>
             ) : (
-              movements.map((m) => {
+              paginatedMovements.map((m) => {
                 const isPositive = m.quantity > 0;
                 const typeBadge: Record<string, { label: string; color: string }> = {
                   receiving: { label: 'Masuk / Stok Awal', color: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' },
@@ -677,7 +701,7 @@ export const InventoryView: React.FC = () => {
                     </td>
                   </tr>
                 ) : (
-                  movements.map((m) => {
+                  paginatedMovements.map((m) => {
                     const isPositive = m.quantity > 0;
                     const typeBadge: Record<string, { label: string; color: string }> = {
                       receiving: { label: 'Masuk / Stok Awal', color: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' },
@@ -721,6 +745,14 @@ export const InventoryView: React.FC = () => {
                 )}
               </tbody>
             </table>
+          </div>
+          <div className="flex items-center justify-between border-t border-slate-800 px-4 py-3 text-xs text-slate-400">
+            <span>Menampilkan {paginatedMovements.length} dari {movements.length} aktivitas</span>
+            <div className="flex items-center gap-2">
+              <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1 || loading} className="rounded-lg border border-slate-700 bg-slate-800 p-1.5 disabled:cursor-not-allowed disabled:opacity-40" aria-label="Halaman mutasi sebelumnya"><ChevronLeft className="h-4 w-4" /></button>
+              <span className="font-mono text-slate-300">{page}/{totalPages}</span>
+              <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages || loading} className="rounded-lg border border-slate-700 bg-slate-800 p-1.5 disabled:cursor-not-allowed disabled:opacity-40" aria-label="Halaman mutasi berikutnya"><ChevronRight className="h-4 w-4" /></button>
+            </div>
           </div>
         </div>
       )}
