@@ -116,8 +116,14 @@ func SendTwoFactorEmail(toEmail, toName, otpCode, ip, userAgent string) error {
 </body>
 </html>`, toName, otpCode, ip, userAgent)
 
+	fromAddress := strings.TrimSpace(os.Getenv("RESEND_FROM_EMAIL"))
+	if fromAddress == "" {
+		// Resend's sandbox sender only works for the Resend account email. Production must set a sender on a verified domain.
+		fromAddress = "Sentosa POS Security <onboarding@resend.dev>"
+	}
+
 	payload := map[string]any{
-		"from":    "Sentosa POS Security <onboarding@resend.dev>",
+		"from":    fromAddress,
 		"to":      []string{toEmail},
 		"subject": fmt.Sprintf("Kode Verifikasi Login Sentosa POS: %s", otpCode),
 		"html":    htmlBody,
@@ -367,6 +373,9 @@ func ResendTwoFactorCode(c *fiber.Ctx) error {
 	if err != nil || challenge.UsedAt != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Sesi verifikasi tidak valid"})
 	}
+	if time.Now().After(challenge.ExpiresAt) {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Sesi verifikasi sudah kadaluwarsa. Silakan login ulang."})
+	}
 
 	var user struct {
 		ID       uuid.UUID
@@ -396,10 +405,9 @@ func ResendTwoFactorCode(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Gagal memperbarui kode verifikasi"})
 	}
 
-	// Send email asynchronously
-	go func() {
-		_ = SendTwoFactorEmail(*user.Email, user.FullName, newCode, ip, userAgent)
-	}()
+	if err := SendTwoFactorEmail(*user.Email, user.FullName, newCode, ip, userAgent); err != nil {
+		return c.Status(fiber.StatusBadGateway).JSON(fiber.Map{"error": "Resend gagal mengirim OTP. Pastikan sender domain sudah terverifikasi.", "detail": err.Error()})
+	}
 
 	return c.JSON(fiber.Map{
 		"message":      "Kode verifikasi baru berhasil dikirim ke email Anda",

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
@@ -128,7 +129,9 @@ func Login(c *fiber.Ctx) error {
 		// Send 2FA email asynchronously
 		if emailStr != "" {
 			go func() {
-				_ = SendTwoFactorEmail(emailStr, user.FullName, otpCode, ip, userAgent)
+				if sendErr := SendTwoFactorEmail(emailStr, user.FullName, otpCode, ip, userAgent); sendErr != nil {
+					fmt.Printf("[2FA] gagal mengirim OTP ke %s: %v\\n", emailStr, sendErr)
+				}
 			}()
 		}
 

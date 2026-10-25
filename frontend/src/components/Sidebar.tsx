@@ -58,6 +58,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const navItems: NavItem[] = [
+    { id: 'dashboard', label: 'Dashboard', icon: <BarChart3 className="w-5 h-5" /> },
     { id: 'pos', label: 'POS Kasir', icon: <ShoppingCart className="w-5 h-5" />, badge: totalCartItems || undefined },
     { id: 'inventory', label: 'Inventaris', icon: <Boxes className="w-5 h-5" /> },
     { id: 'suppliers', label: 'Supplier & Pasokan', icon: <Truck className="w-5 h-5" />, roles: ['owner', 'branch_manager', 'inventory_staff'] },
@@ -242,6 +243,7 @@ export const MobileTopBar: React.FC<{ onMenuClick: () => void; activeTab: string
   const { currentBranch, user } = useAuthStore();
 
   const tabLabels: Record<string, string> = {
+    dashboard: 'Dashboard',
     pos: 'Kasir',
     inventory: 'Inventaris',
     suppliers: 'Supplier',

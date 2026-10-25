@@ -13,6 +13,7 @@ import { ReportsView } from './views/ReportsView';
 import { SuppliersView } from './views/SuppliersView';
 import { SettingsView } from './views/SettingsView';
 import { AuditLogsView } from './views/AuditLogsView';
+import { DashboardView } from './views/DashboardView';
 
 type AuthPage = 'login' | 'forgot-password';
 
@@ -32,7 +33,7 @@ export function App() {
   } = useAuthStore();
 
   const [authPage, setAuthPage] = useState<AuthPage>('login');
-  const [activeTab, setActiveTab] = useState<string>('pos');
+  const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [page] = useState(getInitialPage);
@@ -215,6 +216,7 @@ export function App() {
           min-h-screen
         `}
       >
+        {activeTab === 'dashboard' && <DashboardView onNavigate={setActiveTab} />}
         {activeTab === 'pos' && <PosView />}
         {activeTab === 'inventory' && <InventoryView />}
         {activeTab === 'suppliers' && <SuppliersView />}
