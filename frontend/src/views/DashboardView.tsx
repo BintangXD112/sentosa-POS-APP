@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BarChart3, Boxes, ClipboardList, CreditCard, ShieldCheck, ShoppingCart, Truck, Users } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 
@@ -50,6 +50,8 @@ const roleContent = {
 export const DashboardView: React.FC<{ onNavigate: (tab: string) => void }> = ({ onNavigate }) => {
   const { user, currentBranch } = useAuthStore();
   const content = roleContent[user?.role as keyof typeof roleContent] ?? roleContent.cashier;
+  const [selectedRange, setSelectedRange] = useState('1 hari');
+  const ranges = ['1 hari', '3 hari', '7 hari', '14 hari', '1 bulan'];
 
   return (
     <section className="min-h-screen bg-slate-950 p-4 sm:p-6 lg:p-8">
@@ -73,8 +75,30 @@ export const DashboardView: React.FC<{ onNavigate: (tab: string) => void }> = ({
           ))}
         </div>
 
+        <div className="mt-6 rounded-2xl border border-slate-800 bg-slate-900 p-4 sm:p-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-sm font-bold text-white">Periode dashboard</h2>
+              <p className="mt-1 text-xs text-slate-500">Pilih rentang waktu untuk ringkasan dan aktivitas.</p>
+            </div>
+            <div className="flex flex-wrap gap-2" role="group" aria-label="Rentang waktu dashboard">
+              {ranges.map((range) => (
+                <button
+                  key={range}
+                  type="button"
+                  aria-pressed={selectedRange === range}
+                  onClick={() => setSelectedRange(range)}
+                  className={`rounded-lg border px-3 py-2 text-xs font-semibold transition ${selectedRange === range ? 'border-emerald-400 bg-emerald-400/10 text-emerald-300' : 'border-slate-700 text-slate-400 hover:border-emerald-500/40 hover:text-white'}`}
+                >
+                  {range}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
         <div className="mt-6 grid gap-6 lg:grid-cols-[1.4fr_1fr]">
-          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6"><h2 className="text-sm font-bold text-white">Aktivitas hari ini</h2><div className="mt-8 flex min-h-32 items-center justify-center rounded-xl border border-dashed border-slate-800 text-center text-sm text-slate-500">Belum ada aktivitas untuk ditampilkan.</div></div>
+          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6"><h2 className="text-sm font-bold text-white">Aktivitas {selectedRange.toLowerCase()}</h2><div className="mt-8 flex min-h-32 items-center justify-center rounded-xl border border-dashed border-slate-800 text-center text-sm text-slate-500">Belum ada aktivitas untuk ditampilkan.</div></div>
           <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6"><h2 className="text-sm font-bold text-white">Akses cepat</h2><div className="mt-4 flex flex-col gap-2">{content.actions.map((action) => { const tab = action.includes('laporan') ? 'reports' : action.includes('stok') || action.includes('inventaris') ? 'inventory' : action.includes('pasokan') || action.includes('supplier') ? 'suppliers' : action.includes('transaksi') ? 'pos' : action.includes('audit') ? 'audit-logs' : 'settings'; return <button key={action} onClick={() => onNavigate(tab)} className="flex items-center justify-between rounded-xl border border-slate-800 px-3 py-3 text-left text-xs font-medium text-slate-300 transition hover:border-emerald-500/40 hover:bg-slate-800 hover:text-white"><span>{action}</span><span className="text-emerald-400">→</span></button>; })}</div></div>
         </div>
       </div>
