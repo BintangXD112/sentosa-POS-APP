@@ -77,13 +77,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
     <aside
       className={`
         fixed left-0 top-0 h-full z-40 flex flex-col
-        bg-slate-900 border-r border-slate-800
+        bg-[#17202a] border-r border-[#25313d]
         transition-all duration-300 ease-in-out
         ${collapsed ? 'w-16' : 'w-60'}
       `}
     >
       {/* Logo + Collapse toggle */}
-      <div className={`relative flex items-center h-16 border-b border-slate-800 px-3 ${collapsed ? 'justify-center' : 'justify-between'}`}>
+      <div className={`relative flex items-center h-16 border-b border-[#25313d] px-3 ${collapsed ? 'justify-center' : 'justify-between'}`}>
         {!collapsed && (
           <div className="flex items-center gap-2.5 overflow-hidden">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-slate-950 flex-shrink-0">
@@ -103,7 +103,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {isMobile ? (
           <button
             onClick={onCloseMobile}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-[#22303d] transition-colors cursor-pointer"
             aria-label="Tutup menu"
           >
             <X className="w-5 h-5" />
@@ -114,7 +114,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             className={
               collapsed
                 ? "absolute -right-3.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-slate-800 hover:bg-emerald-600 border border-slate-600 hover:border-emerald-500 text-slate-300 hover:text-white flex items-center justify-center shadow-lg shadow-black/50 transition-all duration-200 z-50 cursor-pointer group"
-                : "p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+                : "p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-[#22303d] transition-colors cursor-pointer"
             }
             aria-label={collapsed ? 'Buka sidebar' : 'Tutup sidebar'}
             title={collapsed ? 'Buka sidebar' : 'Tutup sidebar'}
@@ -130,7 +130,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Branch Selector */}
       {!collapsed && user && user.branches.length > 0 && (
-        <div className="px-3 py-3 border-b border-slate-800 relative">
+        <div className="px-3 py-3 border-b border-[#25313d] relative">
           <button
             onClick={() => setShowBranchMenu((v) => !v)}
             className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs text-slate-200 transition-colors"
@@ -162,7 +162,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Branch icon (collapsed) */}
       {collapsed && user && user.branches.length > 0 && (
-        <div className="flex justify-center py-3 border-b border-slate-800">
+        <div className="flex justify-center py-3 border-b border-[#25313d]">
           <div className="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center" title={currentBranch?.name ?? 'Cabang'}>
             <Building2 className="w-4 h-4 text-emerald-400" />
           </div>
@@ -179,8 +179,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
               w-full flex items-center rounded-xl transition-all
               ${collapsed ? 'justify-center p-3' : 'gap-3 px-3 py-2.5'}
               ${activeTab === item.id
-                ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                ? 'bg-[#d6e9e0] text-[#174d3b] shadow-none'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-[#22303d]'
               }
             `}
             title={collapsed ? item.label : undefined}
@@ -201,7 +201,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </nav>
 
       {/* Bottom: User info + logout */}
-      <div className={`border-t border-slate-800 p-3 ${collapsed ? 'flex justify-center' : ''}`}>
+      <div className={`border-t border-[#25313d] p-3 ${collapsed ? 'flex justify-center' : ''}`}>
         {collapsed ? (
           <button
             onClick={() => logout()}
@@ -254,11 +254,11 @@ export const MobileTopBar: React.FC<{ onMenuClick: () => void; activeTab: string
   };
 
   return (
-    <header className="lg:hidden fixed top-0 left-0 right-0 z-30 h-14 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 flex items-center justify-between px-3">
+    <header className="lg:hidden fixed top-0 left-0 right-0 z-30 h-14 bg-white/95 backdrop-blur-md border-b border-slate-200 flex items-center justify-between px-3">
       <div className="flex items-center gap-2.5 min-w-0">
         <button
           onClick={onMenuClick}
-          className="p-2 -ml-1 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800/80 active:scale-95 transition-all"
+          className="p-2 -ml-1 rounded-xl text-slate-600 hover:text-slate-950 hover:bg-slate-100/80 active:scale-95 transition-all"
           aria-label="Buka menu navigasi"
         >
           <Menu className="w-5 h-5" />

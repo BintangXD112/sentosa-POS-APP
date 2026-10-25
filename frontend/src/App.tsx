@@ -134,7 +134,7 @@ export function App() {
   // --- Verifying session splash (shown smoothly when opening browser) ---
   if (isVerifyingSession) {
     return (
-      <div className="min-h-screen bg-[#090d16] flex flex-col justify-center items-center p-4 relative overflow-hidden">
+      <div className="min-h-screen bg-[#f4f6f8] flex flex-col justify-center items-center p-4 relative overflow-hidden">
         <div className="absolute inset-0 bg-dot-pattern opacity-60 pointer-events-none" />
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-gradient-to-b from-emerald-500/10 via-teal-500/5 to-transparent blur-3xl pointer-events-none" />
         <div className="relative z-10 flex flex-col items-center text-center animate-in fade-in zoom-in-95 duration-200">
@@ -144,7 +144,7 @@ export function App() {
             </div>
             <div className="absolute -inset-1 rounded-2xl border border-emerald-500/30 animate-ping pointer-events-none opacity-40" />
           </div>
-          <h1 className="text-xl font-black text-white tracking-tight mb-1.5">Sentosa POS</h1>
+          <h1 className="text-xl font-black text-slate-950 tracking-tight mb-1.5">Sentosa POS</h1>
           <div className="flex items-center gap-2 text-xs text-emerald-400 font-medium">
             <RefreshCw className="w-3.5 h-3.5 animate-spin" />
             <span>Memulihkan sesi kasir...</span>
@@ -164,7 +164,7 @@ export function App() {
 
   // --- Authenticated App Shell ---
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans">
+    <div className="app-shell min-h-screen bg-[#f4f6f8] text-slate-900 font-sans">
       {/* Desktop Sidebar */}
       <div className="hidden lg:block">
         <Sidebar
