@@ -6,7 +6,10 @@ import {
   X, 
   Ban, 
   AlertTriangle,
-  FileDown
+  FileDown,
+  Search,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { apiRequest } from '../api/client';
 import { useAuthStore } from '../store/authStore';
@@ -16,6 +19,9 @@ import type { SaleDetail, SaleSummary } from '../types';
 export const SalesHistoryView: FC = () => {
   const { currentBranch, user } = useAuthStore();
   const [sales, setSales] = useState<SaleSummary[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
   const [loading, setLoading] = useState(false);
   const [selectedSale, setSelectedSale] = useState<SaleDetail | null>(null);
 
@@ -42,6 +48,19 @@ export const SalesHistoryView: FC = () => {
   useEffect(() => {
     loadSales();
   }, [currentBranch]);
+
+  const filteredSales = sales.filter((sale) => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return true;
+    return [sale.receipt_number, sale.cashier_name, sale.payment_method, sale.status]
+      .some((value) => value?.toLowerCase().includes(query));
+  });
+  const totalPages = Math.max(1, Math.ceil(filteredSales.length / pageSize));
+  const paginatedSales = filteredSales.slice((page - 1) * pageSize, page * pageSize);
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
 
   const viewSaleDetail = async (id: string) => {
     try {
@@ -118,7 +137,21 @@ export const SalesHistoryView: FC = () => {
             <Receipt className="w-4 h-4 text-emerald-400" />
             <h2 className="text-sm font-semibold text-white">Daftar Transaksi Terbaru</h2>
           </div>
-          <span className="text-xs text-slate-400">Total: {sales.length} Transaksi</span>
+          <span className="text-xs text-slate-400">Total: {filteredSales.length} Transaksi</span>
+        </div>
+
+        <div className="p-4 border-b border-slate-800 flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1 max-w-lg">
+            <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <input
+              value={searchQuery}
+              onChange={(event) => { setSearchQuery(event.target.value); setPage(1); }}
+              placeholder="Cari nomor struk, kasir, metode pembayaran..."
+              className="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-800/80 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+              aria-label="Cari transaksi"
+            />
+          </div>
+          <span className="self-center text-xs text-slate-500">Halaman {page} dari {totalPages}</span>
         </div>
 
         {/* Mobile Transaction Cards (Visible on mobile/tablet) */}
@@ -132,7 +165,7 @@ export const SalesHistoryView: FC = () => {
               Belum ada riwayat transaksi penjualan.
             </div>
           ) : (
-            sales.map((s) => (
+            paginatedSales.map((s) => (
               <div key={s.id} className="p-4 space-y-2.5">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
@@ -208,14 +241,14 @@ export const SalesHistoryView: FC = () => {
                     Memuat daftar transaksi...
                   </td>
                 </tr>
-              ) : sales.length === 0 ? (
+              ) : filteredSales.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-4 py-8 text-center text-slate-500 font-sans">
                     Belum ada riwayat transaksi penjualan.
                   </td>
                 </tr>
               ) : (
-                sales.map((s) => (
+                paginatedSales.map((s) => (
                   <tr key={s.id} className="hover:bg-slate-800/30 transition-colors">
                     <td className="px-4 py-3 font-bold text-white">
                       {s.receipt_number}
@@ -270,6 +303,29 @@ export const SalesHistoryView: FC = () => {
               )}
             </tbody>
           </table>
+        </div>
+
+        <div className="p-3 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+          <span>Menampilkan {paginatedSales.length} dari {filteredSales.length} transaksi</span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setPage((current) => Math.max(1, current - 1))}
+              disabled={page === 1 || loading}
+              className="p-1.5 rounded-lg bg-slate-800 border border-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
+              aria-label="Halaman sebelumnya"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <span className="font-mono text-slate-300">{page}/{totalPages}</span>
+            <button
+              onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+              disabled={page === totalPages || loading}
+              className="p-1.5 rounded-lg bg-slate-800 border border-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
+              aria-label="Halaman berikutnya"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </div>
 
