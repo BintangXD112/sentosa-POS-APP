@@ -221,6 +221,16 @@ export const PosView: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 pb-28 lg:pb-8">
+      <div className="mb-5 flex items-center justify-between border-b border-[var(--line)] pb-4">
+        <div>
+          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-emerald-400">Sentosa POS / Kasir</p>
+          <h1 className="mt-1 text-xl font-bold tracking-tight text-white">Transaksi baru</h1>
+        </div>
+        <div className="hidden text-right sm:block">
+          <p className="text-[11px] uppercase tracking-wider text-slate-500">Cabang aktif</p>
+          <p className="mt-1 text-sm font-semibold text-slate-200">{currentBranch?.name ?? 'Pilih cabang'}</p>
+        </div>
+      </div>
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-6">
         
         {/* Left Column: Product Catalog & Search (8 cols on desktop, full width on mobile) */}

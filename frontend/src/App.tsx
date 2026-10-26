@@ -164,7 +164,7 @@ export function App() {
 
   // --- Authenticated App Shell ---
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans">
+    <div className="min-h-screen bg-[var(--app-bg)] text-[var(--text-primary)] font-sans">
       {/* Desktop Sidebar */}
       <div className="hidden lg:block">
         <Sidebar

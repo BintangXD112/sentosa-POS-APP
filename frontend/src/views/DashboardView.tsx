@@ -117,7 +117,7 @@ export const DashboardView: React.FC<{ onNavigate: (tab: string) => void }> = ({
   }, [user?.role]);
 
   return (
-    <section className="min-h-screen bg-slate-950 p-4 text-slate-100 sm:p-6 lg:p-8">
+    <section className="min-h-screen bg-[var(--app-bg)] p-4 text-[var(--text-primary)] sm:p-6 lg:p-8">
       <div className="mx-auto max-w-7xl">
         <header className="mb-7 flex flex-col gap-5 border-b border-slate-800 pb-6 lg:flex-row lg:items-end lg:justify-between">
           <div>

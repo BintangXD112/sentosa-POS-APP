@@ -77,7 +77,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     <aside
       className={`
         fixed left-0 top-0 h-full z-40 flex flex-col
-        bg-slate-900 border-r border-slate-800
+        bg-[var(--surface-1)] border-r border-[var(--line)]
         transition-all duration-300 ease-in-out
         ${collapsed ? 'w-16' : 'w-60'}
       `}
