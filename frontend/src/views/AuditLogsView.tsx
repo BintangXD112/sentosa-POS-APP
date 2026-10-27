@@ -154,7 +154,7 @@ export const AuditLogsView: React.FC = () => {
       };
     }
     return {
-      bg: 'bg-slate-700/50 text-slate-300 border-slate-600',
+      bg: 'bg-white/[0.06] text-slate-300 border-white/[0.15]',
       icon: <Clock className="w-3.5 h-3.5" />,
     };
   };
@@ -165,15 +165,15 @@ export const AuditLogsView: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-400">
-              <ShieldCheck className="w-6 h-6" />
+            <div className="p-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-emerald-400">
+              <ShieldCheck className="w-5 h-5" />
             </div>
             <div>
               <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
                 Log Audit & Keamanan Sistem
               </h1>
-              <p className="text-xs sm:text-sm text-slate-400">
-                Pencatatan riwayat login 2FA, verifikasi perangkat terpercaya 30 hari, transaksi, dan aktivitas sistem
+              <p className="text-xs text-slate-400 mt-0.5">
+                Pencatatan riwayat login 2FA, verifikasi perangkat terpercaya, transaksi, dan aktivitas sistem
               </p>
             </div>
           </div>
@@ -183,10 +183,10 @@ export const AuditLogsView: React.FC = () => {
           <button
             onClick={() => fetchLogs()}
             disabled={loading}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-medium text-slate-200 transition-all cursor-pointer active:scale-95 disabled:opacity-50"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-xs font-medium text-slate-200 transition-colors cursor-pointer disabled:opacity-50"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-emerald-400' : ''}`} />
-            Segarkan Data
+            <span>Segarkan</span>
           </button>
 
           <button
@@ -198,7 +198,7 @@ export const AuditLogsView: React.FC = () => {
               })
             }
             disabled={logs.length === 0 || loading}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-lg shadow-emerald-600/20 transition-all cursor-pointer active:scale-95 disabled:opacity-50"
+            className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-sm transition-colors cursor-pointer disabled:opacity-50"
             title="Ekspor log audit ke format PDF siap cetak"
           >
             <FileDown className="w-3.5 h-3.5" />
@@ -209,39 +209,39 @@ export const AuditLogsView: React.FC = () => {
 
       {/* Summary Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <div className="bg-slate-900/80 border border-slate-800 p-4 rounded-2xl relative overflow-hidden">
+        <div className="bg-[#0e1520] border border-white/[0.08] p-4 rounded-xl relative overflow-hidden shadow-sm">
           <div className="text-xs font-medium text-slate-400">Total Hari Ini</div>
-          <div className="text-2xl font-extrabold text-white mt-1">{stats.total_today}</div>
+          <div className="text-2xl font-bold font-mono text-white mt-1">{stats.total_today}</div>
           <div className="text-[11px] text-slate-500 mt-1">Aktivitas tercatat sejak 00:00</div>
-          <div className="absolute right-3 top-3 w-8 h-8 rounded-lg bg-slate-800/60 flex items-center justify-center text-slate-400">
-            <Clock className="w-4 h-4" />
+          <div className="absolute right-3 top-3 w-7 h-7 rounded-md bg-white/[0.04] border border-white/10 flex items-center justify-center text-slate-400">
+            <Clock className="w-3.5 h-3.5" />
           </div>
         </div>
 
-        <div className="bg-slate-900/80 border border-slate-800 p-4 rounded-2xl relative overflow-hidden">
+        <div className="bg-[#0e1520] border border-white/[0.08] p-4 rounded-xl relative overflow-hidden shadow-sm">
           <div className="text-xs font-medium text-amber-400">Keamanan & 2FA</div>
-          <div className="text-2xl font-extrabold text-white mt-1">{stats.auth_2fa_count}</div>
+          <div className="text-2xl font-bold font-mono text-white mt-1">{stats.auth_2fa_count}</div>
           <div className="text-[11px] text-slate-500 mt-1">Percobaan login & verifikasi OTP</div>
-          <div className="absolute right-3 top-3 w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
-            <ShieldCheck className="w-4 h-4" />
+          <div className="absolute right-3 top-3 w-7 h-7 rounded-md bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+            <ShieldCheck className="w-3.5 h-3.5" />
           </div>
         </div>
 
-        <div className="bg-slate-900/80 border border-slate-800 p-4 rounded-2xl relative overflow-hidden">
+        <div className="bg-[#0e1520] border border-white/[0.08] p-4 rounded-xl relative overflow-hidden shadow-sm">
           <div className="text-xs font-medium text-emerald-400">Transaksi Kasir</div>
-          <div className="text-2xl font-extrabold text-white mt-1">{stats.sales_count}</div>
+          <div className="text-2xl font-bold font-mono text-white mt-1">{stats.sales_count}</div>
           <div className="text-[11px] text-slate-500 mt-1">Penjualan dan pembayaran</div>
-          <div className="absolute right-3 top-3 w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-            <ShoppingCart className="w-4 h-4" />
+          <div className="absolute right-3 top-3 w-7 h-7 rounded-md bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+            <ShoppingCart className="w-3.5 h-3.5" />
           </div>
         </div>
 
-        <div className="bg-slate-900/80 border border-slate-800 p-4 rounded-2xl relative overflow-hidden">
+        <div className="bg-[#0e1520] border border-white/[0.08] p-4 rounded-xl relative overflow-hidden shadow-sm">
           <div className="text-xs font-medium text-blue-400">Inventaris & Stok</div>
-          <div className="text-2xl font-extrabold text-white mt-1">{stats.inventory_count}</div>
-          <div className="text-[11px] text-slate-500 mt-1">Mutasi barang & pesanan supplier</div>
-          <div className="absolute right-3 top-3 w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
-            <Boxes className="w-4 h-4" />
+          <div className="text-2xl font-bold font-mono text-white mt-1">{stats.inventory_count}</div>
+          <div className="text-[11px] text-slate-500 mt-1">Mutasi barang & pasokan vendor</div>
+          <div className="absolute right-3 top-3 w-7 h-7 rounded-md bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
+            <Boxes className="w-3.5 h-3.5" />
           </div>
         </div>
       </div>
@@ -256,10 +256,10 @@ export const AuditLogsView: React.FC = () => {
                 setSelectedCategory(cat.id);
                 setPage(1);
               }}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
                 selectedCategory === cat.id
-                  ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30'
-                  : 'bg-slate-900/90 hover:bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-800'
+                  ? 'bg-emerald-600 text-white shadow-sm'
+                  : 'bg-[#0e1520] hover:bg-white/[0.06] text-slate-400 hover:text-white border border-white/[0.08]'
               }`}
             >
               {cat.icon}
@@ -270,7 +270,7 @@ export const AuditLogsView: React.FC = () => {
 
         {/* Search */}
         <div className="relative">
-          <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             value={searchQuery}
@@ -279,15 +279,15 @@ export const AuditLogsView: React.FC = () => {
               setPage(1);
             }}
             placeholder="Cari berdasarkan aksi, nama pengguna, IP address, atau ID referensi..."
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900/80 border border-slate-800 text-xs sm:text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/60 transition-all"
+            className="w-full pl-9 pr-4 py-2 bg-[#0e1520] border border-white/10 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/60 transition-colors"
           />
         </div>
       </div>
 
       {/* Main Table / List */}
-      <div className="bg-slate-900/80 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+      <div className="bg-[#0e1520] border border-white/[0.08] rounded-xl overflow-hidden shadow-sm">
         {error && (
-          <div className="p-4 bg-rose-500/10 border-b border-rose-500/20 text-rose-400 text-xs flex items-center gap-2">
+          <div className="p-3 bg-rose-500/10 border-b border-rose-500/20 text-rose-400 text-xs flex items-center gap-2">
             <AlertTriangle className="w-4 h-4 flex-shrink-0" />
             <span>{error}</span>
           </div>
@@ -295,20 +295,20 @@ export const AuditLogsView: React.FC = () => {
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs text-slate-300">
-            <thead className="bg-slate-950/60 border-b border-slate-800 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+            <thead className="bg-[#090d14]/70 border-b border-white/[0.08] text-slate-400 font-medium">
               <tr>
                 <th className="px-4 py-3">Waktu</th>
                 <th className="px-4 py-3">Aksi & Kategori</th>
                 <th className="px-4 py-3">Pelaku / Pengguna</th>
                 <th className="px-4 py-3 hidden md:table-cell">IP & Perangkat</th>
-                <th className="px-4 py-3">Rincian</th>
+                <th className="px-4 py-3 text-right">Rincian</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60 font-mono">
+            <tbody className="divide-y divide-white/[0.04] font-mono">
               {loading && logs.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="py-12 text-center text-slate-500 font-sans">
-                    <RefreshCw className="w-6 h-6 animate-spin mx-auto text-emerald-400 mb-2" />
+                    <RefreshCw className="w-5 h-5 animate-spin mx-auto text-emerald-400 mb-2" />
                     Memuat log audit sistem...
                   </td>
                 </tr>
@@ -326,18 +326,18 @@ export const AuditLogsView: React.FC = () => {
                     log.details['trust_device'] === true;
 
                   return (
-                    <tr key={log.id} className="hover:bg-slate-800/30 transition-colors">
+                    <tr key={log.id} className="hover:bg-white/[0.02] transition-colors">
                       {/* Timestamp */}
                       <td className="px-4 py-3 whitespace-nowrap text-slate-400 font-sans">
                         <div className="text-xs text-slate-200 font-medium">{formatDate(log.created_at)}</div>
-                        <div className="text-[10px] text-slate-500">ID: {log.id.slice(0, 8)}</div>
+                        <div className="text-[10px] text-slate-500 font-mono">ID: {log.id.slice(0, 8)}</div>
                       </td>
 
                       {/* Action */}
                       <td className="px-4 py-3 font-sans">
                         <div className="flex flex-col items-start gap-1">
                           <span
-                            className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold border ${badge.bg}`}
+                            className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-medium border ${badge.bg}`}
                           >
                             {badge.icon}
                             {log.action}
@@ -348,9 +348,9 @@ export const AuditLogsView: React.FC = () => {
                             </span>
                           )}
                           {isDeviceTrusted && (
-                            <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                            <span className="inline-flex items-center gap-1 text-[10px] text-emerald-300 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20 font-mono">
                               <Laptop className="w-3 h-3" />
-                              Ingat Perangkat: 30 Hari
+                              Ingat: 30 Hari
                             </span>
                           )}
                         </div>
@@ -359,7 +359,7 @@ export const AuditLogsView: React.FC = () => {
                       {/* Actor */}
                       <td className="px-4 py-3 font-sans">
                         <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-md bg-slate-800 border border-slate-700 flex items-center justify-center text-[10px] font-bold text-slate-300">
+                          <div className="w-6 h-6 rounded bg-white/[0.04] border border-white/10 flex items-center justify-center text-[10px] font-bold text-slate-300">
                             {log.actor_name ? log.actor_name.charAt(0).toUpperCase() : <User className="w-3 h-3" />}
                           </div>
                           <div>
@@ -390,10 +390,10 @@ export const AuditLogsView: React.FC = () => {
                       </td>
 
                       {/* Details View */}
-                      <td className="px-4 py-3 font-sans whitespace-nowrap">
+                      <td className="px-4 py-3 font-sans text-right">
                         <button
                           onClick={() => setActiveLog(log)}
-                          className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-[11px] font-medium text-slate-200 hover:text-white transition-all cursor-pointer"
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-[11px] font-medium text-slate-200 hover:text-white transition-colors cursor-pointer"
                         >
                           <FileJson className="w-3.5 h-3.5 text-emerald-400" />
                           <span>Rincian</span>
@@ -408,22 +408,22 @@ export const AuditLogsView: React.FC = () => {
         </div>
 
         {/* Pagination bar */}
-        <div className="p-3 bg-slate-950/40 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
-          <div>Halaman {page} (menampilkan hingga {limit} log per halaman)</div>
+        <div className="p-3 bg-black/10 border-t border-white/[0.08] flex items-center justify-between text-xs text-slate-400">
+          <div className="font-mono">Halaman {page} (menampilkan hingga {limit} log)</div>
           <div className="flex items-center gap-1.5">
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page <= 1 || loading}
-              className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 disabled:opacity-40 disabled:cursor-not-allowed text-slate-200"
+              className="p-1.5 rounded-md bg-white/[0.03] hover:bg-white/[0.08] border border-white/10 disabled:opacity-40 disabled:cursor-not-allowed text-slate-200 transition-colors cursor-pointer"
               title="Halaman Sebelumnya"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <span className="px-2 font-mono text-slate-300">{page}</span>
+            <span className="px-2 font-mono text-slate-300 font-semibold">{page}</span>
             <button
               onClick={() => setPage((p) => p + 1)}
               disabled={logs.length < limit || loading}
-              className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 disabled:opacity-40 disabled:cursor-not-allowed text-slate-200"
+              className="p-1.5 rounded-md bg-white/[0.03] hover:bg-white/[0.08] border border-white/10 disabled:opacity-40 disabled:cursor-not-allowed text-slate-200 transition-colors cursor-pointer"
               title="Halaman Berikutnya"
             >
               <ChevronRight className="w-4 h-4" />
@@ -435,24 +435,24 @@ export const AuditLogsView: React.FC = () => {
       {/* Modal Detail Log */}
       {activeLog && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-150"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-150"
           onClick={() => setActiveLog(null)}
         >
           <div
-            className="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden"
+            className="bg-[#0e1520] border border-white/10 rounded-2xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.08] bg-white/[0.02]">
               <div className="flex items-center gap-2">
                 <FileJson className="w-5 h-5 text-emerald-400" />
-                <h3 className="text-sm sm:text-base font-bold text-white">
+                <h3 className="text-sm sm:text-base font-semibold text-white">
                   Rincian Log Audit
                 </h3>
               </div>
               <button
                 onClick={() => setActiveLog(null)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -460,7 +460,7 @@ export const AuditLogsView: React.FC = () => {
 
             {/* Modal Body */}
             <div className="p-5 overflow-y-auto space-y-4 text-xs">
-              <div className="grid grid-cols-2 gap-3 bg-slate-950/50 p-3 rounded-xl border border-slate-800">
+              <div className="grid grid-cols-2 gap-3 bg-[#090d14] p-3 rounded-xl border border-white/[0.06]">
                 <div>
                   <span className="text-[10px] text-slate-500 uppercase tracking-wider block">Aksi</span>
                   <span className="text-emerald-400 font-mono font-medium">{activeLog.action}</span>
@@ -486,7 +486,7 @@ export const AuditLogsView: React.FC = () => {
                   <span className="text-[10px] text-slate-500 uppercase tracking-wider block mb-1">
                     User Agent Client
                   </span>
-                  <div className="p-2.5 bg-slate-950/60 border border-slate-800 rounded-lg text-slate-300 text-[11px] break-all font-mono">
+                  <div className="p-2.5 bg-[#090d14] border border-white/[0.06] rounded-lg text-slate-300 text-[11px] break-all font-mono">
                     {activeLog.user_agent}
                   </div>
                 </div>
@@ -496,17 +496,17 @@ export const AuditLogsView: React.FC = () => {
                 <span className="text-[10px] text-slate-500 uppercase tracking-wider block mb-1">
                   Metadata & Rincian Payload (JSON)
                 </span>
-                <pre className="p-3 bg-slate-950/80 border border-slate-800 rounded-xl text-emerald-300 font-mono text-[11px] overflow-x-auto max-h-64 leading-relaxed">
+                <pre className="p-3 bg-[#090d14] border border-white/[0.06] rounded-lg text-emerald-300 font-mono text-[11px] overflow-x-auto max-h-64 leading-relaxed">
                   {JSON.stringify(activeLog.details, null, 2)}
                 </pre>
               </div>
             </div>
 
             {/* Modal Footer */}
-            <div className="px-5 py-3 border-t border-slate-800 bg-slate-950/30 flex justify-end">
+            <div className="px-5 py-3 border-t border-white/[0.08] bg-[#0e1520] flex justify-end">
               <button
                 onClick={() => setActiveLog(null)}
-                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium transition-colors"
+                className="px-4 py-2 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-slate-200 text-xs font-medium transition-colors cursor-pointer"
               >
                 Tutup
               </button>

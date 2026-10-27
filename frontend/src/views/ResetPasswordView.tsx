@@ -99,7 +99,7 @@ export const ResetPasswordView: React.FC = () => {
           <p className="text-slate-400 text-xs mt-1">Atur Password Baru</p>
         </div>
 
-        <div className="bg-slate-900/90 backdrop-blur-xl border border-slate-800 rounded-3xl p-6 sm:p-7 shadow-2xl shadow-black/60">
+        <div className="bg-[#0e1520]/95 backdrop-blur-xl border border-white/[0.08] rounded-xl p-6 sm:p-7 shadow-2xl shadow-black/60">
           {status === 'verifying' && (
             <div className="flex flex-col items-center text-center gap-4 py-6">
               <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
@@ -184,7 +184,7 @@ export const ResetPasswordView: React.FC = () => {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Minimal 8 karakter"
-                      className="w-full pl-10 pr-11 py-2.5 bg-slate-800/80 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors"
+                      className="w-full pl-10 pr-11 py-2.5 bg-[#090d14] border border-white/[0.08] rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors"
                     />
                     <button
                       type="button"
@@ -202,7 +202,7 @@ export const ResetPasswordView: React.FC = () => {
                           <div
                             key={i}
                             className={`h-1 flex-1 rounded-full transition-all ${
-                              i <= strength ? strengthColor : 'bg-slate-700'
+                              i <= strength ? strengthColor : 'bg-white/[0.06]'
                             }`}
                           />
                         ))}
@@ -228,12 +228,12 @@ export const ResetPasswordView: React.FC = () => {
                       value={confirm}
                       onChange={(e) => setConfirm(e.target.value)}
                       placeholder="Ulangi password baru"
-                      className={`w-full pl-10 pr-11 py-2.5 bg-slate-800/80 border rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none transition-colors ${
+                      className={`w-full pl-10 pr-11 py-2.5 bg-[#090d14]/80 border rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none transition-colors ${
                         confirm && password !== confirm
                           ? 'border-rose-500 focus:border-rose-400'
                           : confirm && password === confirm
                           ? 'border-emerald-500'
-                          : 'border-slate-700 focus:border-emerald-500'
+                          : 'border-white/[0.08] focus:border-emerald-500'
                       }`}
                     />
                     <button

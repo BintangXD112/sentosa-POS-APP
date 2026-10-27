@@ -320,7 +320,7 @@ export const SettingsView: React.FC = () => {
   // --- Appearance state (Global reactive theme) ---
   const { accentColor, setAccentColor, compactMode, setCompactMode } = useThemeStore();
 
-  const currentRole = user ? (roleLabels[user.role] ?? { label: 'Staff', color: 'bg-slate-700 text-slate-300' }) : null;
+  const currentRole = user ? (roleLabels[user.role] ?? { label: 'Staff', color: 'bg-white/[0.08] text-slate-300' }) : null;
 
   const passStrength = (() => {
     if (newPass.length === 0) return 0;
@@ -579,7 +579,7 @@ export const SettingsView: React.FC = () => {
             className={`px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap flex items-center gap-2 transition-all active:scale-95 ${
               activeSection === s.id
                 ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/25'
-                : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200'
+                : 'bg-[#0e1520] border border-white/[0.08] text-slate-400 hover:text-slate-200'
             }`}
           >
             {s.icon}
@@ -596,15 +596,15 @@ export const SettingsView: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-12 gap-5 sm:gap-6">
         {/* Desktop Left Nav */}
         <aside className="hidden md:block md:col-span-3">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden sticky top-6">
+          <div className="bg-[#0e1520] border border-white/[0.08] rounded-xl overflow-hidden sticky top-6">
             {sections.map((s) => (
               <button
                 key={s.id}
                 onClick={() => setActiveSection(s.id)}
-                className={`w-full flex items-center justify-between px-4 py-3 text-sm transition-colors border-b border-slate-800 last:border-0 ${
+                className={`w-full flex items-center justify-between px-4 py-3 text-sm transition-colors border-b border-white/[0.08] last:border-0 ${
                   activeSection === s.id
                     ? 'bg-emerald-600/10 text-emerald-400 font-semibold'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.04]'
                 }`}
               >
                 <div className="flex items-center gap-2.5">
@@ -630,8 +630,8 @@ export const SettingsView: React.FC = () => {
         <div className="md:col-span-9 space-y-6">
           {/* PROFILE SECTION (EDITABLE) */}
           {activeSection === 'profile' && (
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+            <div className="bg-[#0e1520] border border-white/[0.08] rounded-xl p-6 space-y-6">
+              <div className="flex items-center justify-between border-b border-white/[0.08] pb-4">
                 <div>
                   <h2 className="text-base font-bold text-white">Profil Pengguna</h2>
                   <p className="text-xs text-slate-400 mt-0.5">
@@ -664,8 +664,8 @@ export const SettingsView: React.FC = () => {
               )}
 
               {/* Avatar + Quick summary */}
-              <div className="flex items-center gap-4 bg-slate-800/40 p-4 rounded-xl border border-slate-800">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-600 to-teal-500 flex items-center justify-center text-xl font-black text-white shadow-lg shadow-emerald-500/20 flex-shrink-0">
+              <div className="flex items-center gap-4 bg-white/[0.03] p-4 rounded-xl border border-white/[0.08]">
+                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-500 flex items-center justify-center text-xl font-black text-white shadow-lg shadow-emerald-500/20 flex-shrink-0">
                   {fullName ? fullName.charAt(0).toUpperCase() : '?'}
                 </div>
                 <div className="min-w-0">
@@ -692,7 +692,7 @@ export const SettingsView: React.FC = () => {
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       placeholder="Masukkan nama lengkap"
-                      className="w-full px-3.5 py-2.5 bg-slate-800/80 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors"
+                      className="w-full px-3.5 py-2.5 bg-[#090d14] border border-white/[0.08] rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors"
                     />
                   </div>
 
@@ -709,7 +709,7 @@ export const SettingsView: React.FC = () => {
                         value={username}
                         onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9._-]/g, ''))}
                         placeholder="username"
-                        className="w-full pl-8 pr-3.5 py-2.5 bg-slate-800/80 border border-slate-700 rounded-xl text-sm text-white font-mono placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors"
+                        className="w-full pl-8 pr-3.5 py-2.5 bg-[#090d14] border border-white/[0.08] rounded-xl text-sm text-white font-mono placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors"
                       />
                     </div>
                   </div>
@@ -724,7 +724,7 @@ export const SettingsView: React.FC = () => {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="nama@contoh.com"
-                      className="w-full px-3.5 py-2.5 bg-slate-800/80 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors"
+                      className="w-full px-3.5 py-2.5 bg-[#090d14] border border-white/[0.08] rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors"
                     />
                   </div>
 
@@ -732,7 +732,7 @@ export const SettingsView: React.FC = () => {
                     <label className="block text-xs font-semibold text-slate-300 mb-1.5">
                       Peran / Hak Akses
                     </label>
-                    <div className="px-3.5 py-2.5 bg-slate-800/40 border border-slate-700/60 rounded-xl text-sm text-slate-400 flex items-center justify-between">
+                    <div className="px-3.5 py-2.5 bg-[#090d14]/60 border border-white/[0.06] rounded-xl text-sm text-slate-400 flex items-center justify-between">
                       <span className="capitalize">{currentRole?.label || user?.role}</span>
                       <Shield className="w-4 h-4 text-slate-500" />
                     </div>
@@ -752,7 +752,7 @@ export const SettingsView: React.FC = () => {
                   <button
                     type="button"
                     onClick={handleResetProfile}
-                    className="flex items-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-medium text-xs sm:text-sm rounded-xl transition-colors cursor-pointer"
+                    className="flex items-center gap-2 px-4 py-2.5 bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 hover:text-white font-medium text-xs sm:text-sm rounded-xl transition-colors cursor-pointer"
                   >
                     <RotateCcw className="w-4 h-4" />
                     <span>Reset</span>
@@ -766,8 +766,8 @@ export const SettingsView: React.FC = () => {
           {activeSection === 'store' && isOwner && (
             <div className="space-y-6">
               {/* Business Info Form */}
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-5">
-                <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+              <div className="bg-[#0e1520] border border-white/[0.08] rounded-xl p-6 space-y-5">
+                <div className="flex items-center justify-between border-b border-white/[0.08] pb-4">
                   <div>
                     <h2 className="text-base font-bold text-white flex items-center gap-2">
                       <Store className="w-5 h-5 text-emerald-400" />
@@ -817,7 +817,7 @@ export const SettingsView: React.FC = () => {
                             value={bizName}
                             onChange={(e) => setBizName(e.target.value)}
                             placeholder="Contoh: Sentosa Retail Group"
-                            className="w-full pl-10 pr-3.5 py-2.5 bg-slate-800/80 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors font-medium"
+                            className="w-full pl-10 pr-3.5 py-2.5 bg-[#090d14] border border-white/[0.08] rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors font-medium"
                           />
                         </div>
                       </div>
@@ -832,7 +832,7 @@ export const SettingsView: React.FC = () => {
                             id="input-biz-currency"
                             value={bizCurrency}
                             onChange={(e) => setBizCurrency(e.target.value)}
-                            className="w-full pl-10 pr-3.5 py-2.5 bg-slate-800/80 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-emerald-500 transition-colors"
+                            className="w-full pl-10 pr-3.5 py-2.5 bg-[#090d14] border border-white/[0.08] rounded-xl text-sm text-white focus:outline-none focus:border-emerald-500 transition-colors"
                           >
                             <option value="IDR">IDR (Rupiah Indonesia - Rp)</option>
                             <option value="USD">USD (US Dollar - $)</option>
@@ -854,7 +854,7 @@ export const SettingsView: React.FC = () => {
                             value={bizPhone}
                             onChange={(e) => setBizPhone(e.target.value)}
                             placeholder="Contoh: 021-5551234 atau 08123456789"
-                            className="w-full pl-10 pr-3.5 py-2.5 bg-slate-800/80 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors"
+                            className="w-full pl-10 pr-3.5 py-2.5 bg-[#090d14] border border-white/[0.08] rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors"
                           />
                         </div>
                       </div>
@@ -871,7 +871,7 @@ export const SettingsView: React.FC = () => {
                             value={bizAddress}
                             onChange={(e) => setBizAddress(e.target.value)}
                             placeholder="Alamat lengkap lokasi toko pusat"
-                            className="w-full pl-10 pr-3.5 py-2.5 bg-slate-800/80 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors resize-none"
+                            className="w-full pl-10 pr-3.5 py-2.5 bg-[#090d14] border border-white/[0.08] rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors resize-none"
                           />
                         </div>
                       </div>
@@ -888,7 +888,7 @@ export const SettingsView: React.FC = () => {
                             value={bizReceiptFooter}
                             onChange={(e) => setBizReceiptFooter(e.target.value)}
                             placeholder="Contoh: Terima kasih atas kunjungan Anda! Barang yang sudah dibeli tidak dapat ditukar."
-                            className="w-full pl-10 pr-3.5 py-2.5 bg-slate-800/80 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors resize-none"
+                            className="w-full pl-10 pr-3.5 py-2.5 bg-[#090d14] border border-white/[0.08] rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors resize-none"
                           />
                         </div>
                       </div>
@@ -909,8 +909,8 @@ export const SettingsView: React.FC = () => {
               </div>
 
               {/* Branches Management */}
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+              <div className="bg-[#0e1520] border border-white/[0.08] rounded-xl p-6 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/[0.08] pb-3">
                   <div>
                     <h3 className="text-sm font-bold text-white flex items-center gap-2">
                       <Building2 className="w-4 h-4 text-emerald-400" />
@@ -943,7 +943,7 @@ export const SettingsView: React.FC = () => {
                 {isAddingBranch && (
                   <form
                     onSubmit={handleCreateBranch}
-                    className="bg-slate-800/70 border border-emerald-500/40 rounded-xl p-4 space-y-3 animate-in fade-in"
+                    className="bg-[#0e1520] border border-emerald-500/40 rounded-xl p-4 space-y-3 animate-in fade-in"
                   >
                     <div className="flex items-center justify-between">
                       <h4 className="text-xs font-bold text-emerald-400 uppercase tracking-wide flex items-center gap-1.5">
@@ -985,7 +985,7 @@ export const SettingsView: React.FC = () => {
                           placeholder="Contoh: Cabang Sentosa Mall"
                           value={newBranchData.name}
                           onChange={(e) => setNewBranchData({ ...newBranchData, name: e.target.value })}
-                          className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+                          className="w-full px-3 py-2 bg-[#090d14] border border-white/[0.08] rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
                         />
                       </div>
                       <div>
@@ -995,7 +995,7 @@ export const SettingsView: React.FC = () => {
                           placeholder="Contoh: 0812-3456-7890"
                           value={newBranchData.phone}
                           onChange={(e) => setNewBranchData({ ...newBranchData, phone: e.target.value })}
-                          className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+                          className="w-full px-3 py-2 bg-[#090d14] border border-white/[0.08] rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
                         />
                       </div>
                       <div className="sm:col-span-2">
@@ -1005,7 +1005,7 @@ export const SettingsView: React.FC = () => {
                           placeholder="Contoh: Jl. Sudirman No. 12, Jakarta Pusat"
                           value={newBranchData.address}
                           onChange={(e) => setNewBranchData({ ...newBranchData, address: e.target.value })}
-                          className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+                          className="w-full px-3 py-2 bg-[#090d14] border border-white/[0.08] rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
                         />
                       </div>
                       <div className="sm:col-span-2 flex items-center gap-2">
@@ -1014,7 +1014,7 @@ export const SettingsView: React.FC = () => {
                           type="checkbox"
                           checked={newBranchData.is_active}
                           onChange={(e) => setNewBranchData({ ...newBranchData, is_active: e.target.checked })}
-                          className="w-4 h-4 rounded text-emerald-600 bg-slate-900 border-slate-700 focus:ring-emerald-500"
+                          className="w-4 h-4 rounded text-emerald-600 bg-[#090d14] border-white/[0.08] focus:ring-emerald-500"
                         />
                         <label htmlFor="new-branch-active-check" className="text-xs text-slate-300 cursor-pointer">
                           Cabang langsung aktif beroperasi
@@ -1036,7 +1036,7 @@ export const SettingsView: React.FC = () => {
                           setIsAddingBranch(false);
                           setBranchMessage(null);
                         }}
-                        className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs rounded-lg"
+                        className="px-3 py-1.5 bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 text-xs rounded-lg"
                       >
                         Batal
                       </button>
@@ -1047,7 +1047,7 @@ export const SettingsView: React.FC = () => {
                 {editingBranch && (
                   <form
                     onSubmit={handleSaveBranch}
-                    className="bg-slate-800/70 border border-emerald-500/40 rounded-xl p-4 space-y-3 animate-in fade-in"
+                    className="bg-[#0e1520] border border-emerald-500/40 rounded-xl p-4 space-y-3 animate-in fade-in"
                   >
                     <div className="flex items-center justify-between">
                       <h4 className="text-xs font-bold text-emerald-400 uppercase tracking-wide">
@@ -1082,7 +1082,7 @@ export const SettingsView: React.FC = () => {
                           required
                           value={editingBranch.name}
                           onChange={(e) => setEditingBranch({ ...editingBranch, name: e.target.value })}
-                          className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-emerald-500"
+                          className="w-full px-3 py-2 bg-[#090d14] border border-white/[0.08] rounded-lg text-xs text-white focus:outline-none focus:border-emerald-500"
                         />
                       </div>
                       <div>
@@ -1091,7 +1091,7 @@ export const SettingsView: React.FC = () => {
                           type="text"
                           value={editingBranch.phone}
                           onChange={(e) => setEditingBranch({ ...editingBranch, phone: e.target.value })}
-                          className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-emerald-500"
+                          className="w-full px-3 py-2 bg-[#090d14] border border-white/[0.08] rounded-lg text-xs text-white focus:outline-none focus:border-emerald-500"
                         />
                       </div>
                       <div className="sm:col-span-2">
@@ -1100,7 +1100,7 @@ export const SettingsView: React.FC = () => {
                           type="text"
                           value={editingBranch.address}
                           onChange={(e) => setEditingBranch({ ...editingBranch, address: e.target.value })}
-                          className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-emerald-500"
+                          className="w-full px-3 py-2 bg-[#090d14] border border-white/[0.08] rounded-lg text-xs text-white focus:outline-none focus:border-emerald-500"
                         />
                       </div>
                       <div className="sm:col-span-2 flex items-center gap-2">
@@ -1109,7 +1109,7 @@ export const SettingsView: React.FC = () => {
                           type="checkbox"
                           checked={editingBranch.is_active}
                           onChange={(e) => setEditingBranch({ ...editingBranch, is_active: e.target.checked })}
-                          className="w-4 h-4 rounded text-emerald-600 bg-slate-900 border-slate-700 focus:ring-emerald-500"
+                          className="w-4 h-4 rounded text-emerald-600 bg-[#090d14] border-white/[0.08] focus:ring-emerald-500"
                         />
                         <label htmlFor="branch-active-check" className="text-xs text-slate-300 cursor-pointer">
                           Cabang aktif beroperasi
@@ -1128,7 +1128,7 @@ export const SettingsView: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => setEditingBranch(null)}
-                        className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs rounded-lg"
+                        className="px-3 py-1.5 bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 text-xs rounded-lg"
                       >
                         Batal
                       </button>
@@ -1140,7 +1140,7 @@ export const SettingsView: React.FC = () => {
                   {branchesList.map((branch) => (
                     <div
                       key={branch.id}
-                      className="flex items-center justify-between p-3.5 bg-slate-800/40 border border-slate-800 hover:border-slate-700 rounded-xl transition-colors"
+                      className="flex items-center justify-between p-3.5 bg-white/[0.03] border border-white/[0.08] hover:border-white/[0.08] rounded-xl transition-colors"
                     >
                       <div className="min-w-0 flex-1 pr-3">
                         <div className="flex items-center gap-2">
@@ -1149,7 +1149,7 @@ export const SettingsView: React.FC = () => {
                             className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
                               branch.is_active
                                 ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
-                                : 'bg-slate-700 text-slate-400'
+                                : 'bg-white/[0.08] text-slate-400'
                             }`}
                           >
                             {branch.is_active ? 'Aktif' : 'Nonaktif'}
@@ -1177,7 +1177,7 @@ export const SettingsView: React.FC = () => {
                           setIsAddingBranch(false);
                           setBranchMessage(null);
                         }}
-                        className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer flex-shrink-0"
+                        className="p-2 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 hover:text-white transition-colors cursor-pointer flex-shrink-0"
                         title="Edit Cabang"
                       >
                         <Edit2 className="w-4 h-4" />
@@ -1192,8 +1192,8 @@ export const SettingsView: React.FC = () => {
           {/* USER MANAGEMENT SECTION (OWNER ONLY) */}
           {activeSection === 'users' && isOwner && (
             <div className="space-y-6">
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-5">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+              <div className="bg-[#0e1520] border border-white/[0.08] rounded-xl p-6 space-y-5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/[0.08] pb-4">
                   <div>
                     <h2 className="text-base font-bold text-white flex items-center gap-2">
                       <Users className="w-5 h-5 text-emerald-400" />
@@ -1221,7 +1221,7 @@ export const SettingsView: React.FC = () => {
                       value={userSearch}
                       onChange={(e) => setUserSearch(e.target.value)}
                       placeholder="Cari pengguna (nama, username, email)..."
-                      className="w-full pl-10 pr-3.5 py-2 bg-slate-800/80 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors"
+                      className="w-full pl-10 pr-3.5 py-2 bg-[#090d14] border border-white/[0.08] rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors"
                     />
                   </div>
                   <div className="text-xs text-slate-400">
@@ -1247,16 +1247,16 @@ export const SettingsView: React.FC = () => {
                         );
                       })
                       .map((u) => {
-                        const rBadge = roleLabels[u.role] || { label: u.role, color: 'bg-slate-700 text-slate-300' };
+                        const rBadge = roleLabels[u.role] || { label: u.role, color: 'bg-white/[0.08] text-slate-300' };
                         const isSelf = u.id === user?.id;
 
                         return (
                           <div
                             key={u.id}
-                            className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-slate-800/40 border border-slate-800 hover:border-slate-700/80 rounded-xl gap-3 transition-colors"
+                            className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-white/[0.03] border border-white/[0.08] hover:border-white/[0.08]/80 rounded-xl gap-3 transition-colors"
                           >
                             <div className="flex items-start sm:items-center gap-3 min-w-0">
-                              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center text-sm font-bold text-white flex-shrink-0 border border-slate-700">
+                              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center text-sm font-bold text-white flex-shrink-0 border border-white/[0.08]">
                                 {u.full_name?.charAt(0).toUpperCase()}
                               </div>
                               <div className="min-w-0">
@@ -1299,7 +1299,7 @@ export const SettingsView: React.FC = () => {
                             <div className="flex items-center gap-1.5 self-end sm:self-auto flex-shrink-0">
                               <button
                                 onClick={() => handleOpenEditUser(u)}
-                                className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg text-xs font-semibold flex items-center gap-1 border border-slate-700 transition-colors cursor-pointer"
+                                className="px-2.5 py-1.5 bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 hover:text-white rounded-lg text-xs font-semibold flex items-center gap-1 border border-white/[0.08] transition-colors cursor-pointer"
                                 title="Edit Pengguna"
                               >
                                 <Edit2 className="w-3.5 h-3.5 text-emerald-400" />
@@ -1308,7 +1308,7 @@ export const SettingsView: React.FC = () => {
                               {!isSelf && (
                                 <button
                                   onClick={() => setDeleteConfirmUser(u)}
-                                  className="px-2.5 py-1.5 bg-slate-800 hover:bg-rose-900/40 text-slate-400 hover:text-rose-300 rounded-lg text-xs font-semibold flex items-center gap-1 border border-slate-700 transition-colors cursor-pointer"
+                                  className="px-2.5 py-1.5 bg-white/[0.04] hover:bg-rose-900/40 text-slate-400 hover:text-rose-300 rounded-lg text-xs font-semibold flex items-center gap-1 border border-white/[0.08] transition-colors cursor-pointer"
                                   title="Hapus Pengguna"
                                 >
                                   <Trash2 className="w-3.5 h-3.5 text-rose-400" />
@@ -1325,9 +1325,9 @@ export const SettingsView: React.FC = () => {
 
               {/* Add / Edit User Modal */}
               {userModalOpen && (
-                <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
-                  <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg max-h-[92vh] flex flex-col overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
-                    <div className="p-4 sm:p-5 border-b border-slate-800 flex items-center justify-between flex-shrink-0">
+                <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+                  <div className="bg-[#0e1520] border border-white/[0.08] rounded-xl w-full max-w-lg max-h-[92vh] flex flex-col overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+                    <div className="p-4 sm:p-5 border-b border-white/[0.08] flex items-center justify-between flex-shrink-0">
                       <div className="flex items-center gap-2">
                         <Users className="w-5 h-5 text-emerald-400" />
                         <h3 className="text-sm sm:text-base font-bold text-white">
@@ -1367,7 +1367,7 @@ export const SettingsView: React.FC = () => {
                             value={uFullName}
                             onChange={(e) => setUFullName(e.target.value)}
                             placeholder="Contoh: Budi Santoso"
-                            className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500"
+                            className="w-full px-3 py-2 bg-[#090d14] border border-white/[0.08] rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500"
                           />
                         </div>
 
@@ -1382,7 +1382,7 @@ export const SettingsView: React.FC = () => {
                             value={uUsername}
                             onChange={(e) => setUUsername(e.target.value.toLowerCase().replace(/[^a-z0-9._-]/g, ''))}
                             placeholder="username_kasir"
-                            className="w-full px-3 py-2 bg-slate-800 disabled:bg-slate-900 border border-slate-700 disabled:border-slate-800 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-emerald-500"
+                            className="w-full px-3 py-2 bg-[#090d14] disabled:bg-[#090d14] border border-white/[0.08] disabled:border-white/[0.08] rounded-xl text-xs text-white font-mono focus:outline-none focus:border-emerald-500"
                           />
                         </div>
 
@@ -1395,7 +1395,7 @@ export const SettingsView: React.FC = () => {
                             value={uEmail}
                             onChange={(e) => setUEmail(e.target.value)}
                             placeholder="user@toko.com"
-                            className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500"
+                            className="w-full px-3 py-2 bg-[#090d14] border border-white/[0.08] rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500"
                           />
                         </div>
 
@@ -1406,7 +1406,7 @@ export const SettingsView: React.FC = () => {
                           <select
                             value={uRole}
                             onChange={(e) => setURole(e.target.value as Role)}
-                            className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500"
+                            className="w-full px-3 py-2 bg-[#090d14] border border-white/[0.08] rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500"
                           >
                             <option value="cashier">Kasir (POS & Transaksi)</option>
                             <option value="branch_manager">Branch Manager (Cabang & Laporan)</option>
@@ -1425,7 +1425,7 @@ export const SettingsView: React.FC = () => {
                             value={uPassword}
                             onChange={(e) => setUPassword(e.target.value)}
                             placeholder={editingUser ? 'Minimal 6 karakter' : 'Minimal 6 karakter'}
-                            className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500"
+                            className="w-full px-3 py-2 bg-[#090d14] border border-white/[0.08] rounded-xl text-xs text-white focus:outline-none focus:border-emerald-500"
                           />
                         </div>
 
@@ -1436,7 +1436,7 @@ export const SettingsView: React.FC = () => {
                           {branchesList.length === 0 ? (
                             <div className="text-xs text-slate-500 italic">Belum ada cabang terdaftar.</div>
                           ) : (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-slate-800/40 p-3 rounded-xl border border-slate-700/60">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-white/[0.03] p-3 rounded-xl border border-white/[0.08]/60">
                               {branchesList.map((b) => (
                                 <label key={b.id} className="flex items-center gap-2 text-xs text-slate-200 cursor-pointer">
                                   <input
@@ -1449,7 +1449,7 @@ export const SettingsView: React.FC = () => {
                                         setUBranchIds(uBranchIds.filter((id) => id !== b.id));
                                       }
                                     }}
-                                    className="w-4 h-4 rounded text-emerald-600 bg-slate-900 border-slate-700 focus:ring-emerald-500"
+                                    className="w-4 h-4 rounded text-emerald-600 bg-[#090d14] border-white/[0.08] focus:ring-emerald-500"
                                   />
                                   <span>{b.name}</span>
                                 </label>
@@ -1465,7 +1465,7 @@ export const SettingsView: React.FC = () => {
                               type="checkbox"
                               checked={uIsActive}
                               onChange={(e) => setUIsActive(e.target.checked)}
-                              className="w-4 h-4 rounded text-emerald-600 bg-slate-900 border-slate-700 focus:ring-emerald-500"
+                              className="w-4 h-4 rounded text-emerald-600 bg-[#090d14] border-white/[0.08] focus:ring-emerald-500"
                             />
                             <label htmlFor="user-active-toggle" className="text-xs text-slate-300 cursor-pointer">
                               Akun ini aktif (dapat login ke sistem POS)
@@ -1474,11 +1474,11 @@ export const SettingsView: React.FC = () => {
                         )}
                       </div>
 
-                      <div className="pt-3 flex justify-end gap-2 border-t border-slate-800">
+                      <div className="pt-3 flex justify-end gap-2 border-t border-white/[0.08]">
                         <button
                           type="button"
                           onClick={() => setUserModalOpen(false)}
-                          className="px-4 py-2 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800 text-xs font-semibold"
+                          className="px-4 py-2 rounded-xl border border-white/[0.08] text-slate-300 hover:bg-white/[0.06] text-xs font-semibold"
                         >
                           Batal
                         </button>
@@ -1497,8 +1497,8 @@ export const SettingsView: React.FC = () => {
 
               {/* Delete Confirmation Modal */}
               {deleteConfirmUser && (
-                <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
-                  <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl animate-in zoom-in-95">
+                <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+                  <div className="bg-[#0e1520] border border-white/[0.08] rounded-xl w-full max-w-sm p-5 space-y-4 shadow-2xl animate-in zoom-in-95">
                     <div className="flex items-center gap-3 text-rose-400">
                       <div className="p-2.5 rounded-xl bg-rose-500/15 border border-rose-500/30">
                         <Trash2 className="w-5 h-5" />
@@ -1517,7 +1517,7 @@ export const SettingsView: React.FC = () => {
                     <div className="flex items-center justify-end gap-2 pt-2">
                       <button
                         onClick={() => setDeleteConfirmUser(null)}
-                        className="px-3.5 py-2 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800 text-xs font-semibold"
+                        className="px-3.5 py-2 rounded-xl border border-white/[0.08] text-slate-300 hover:bg-white/[0.06] text-xs font-semibold"
                       >
                         Batal
                       </button>
@@ -1537,9 +1537,9 @@ export const SettingsView: React.FC = () => {
 
           {/* SECURITY SECTION */}
           {activeSection === 'security' && (
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-5">
+            <div className="bg-[#0e1520] border border-white/[0.08] rounded-xl p-6 space-y-5">
               {isOwner && (
-                <div className="pb-5 border-b border-slate-800">
+                <div className="pb-5 border-b border-white/[0.08]">
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <h2 className="text-sm font-bold text-white">Autentikasi Dua Faktor (A2F)</h2>
@@ -1554,7 +1554,7 @@ export const SettingsView: React.FC = () => {
                       aria-label="Aktifkan autentikasi dua faktor"
                       onClick={handleToggleTwoFactor}
                       disabled={twoFactorSaving}
-                      className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 disabled:opacity-60 ${twoFactorEnabled ? 'bg-emerald-600' : 'bg-slate-700'}`}
+                      className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 disabled:opacity-60 ${twoFactorEnabled ? 'bg-emerald-600' : 'bg-white/[0.08]'}`}
                     >
                       <span className={`absolute top-1 size-4 rounded-full bg-white shadow transition-transform ${twoFactorEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
                     </button>
@@ -1610,7 +1610,7 @@ export const SettingsView: React.FC = () => {
                       value={currentPass}
                       onChange={(e) => setCurrentPass(e.target.value)}
                       placeholder="Password sekarang"
-                      className="w-full pl-10 pr-11 py-2.5 bg-slate-800/80 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors"
+                      className="w-full pl-10 pr-11 py-2.5 bg-[#090d14] border border-white/[0.08] rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors"
                     />
                     <button
                       type="button"
@@ -1636,7 +1636,7 @@ export const SettingsView: React.FC = () => {
                       value={newPass}
                       onChange={(e) => setNewPass(e.target.value)}
                       placeholder="Minimal 8 karakter"
-                      className="w-full pl-10 pr-11 py-2.5 bg-slate-800/80 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors"
+                      className="w-full pl-10 pr-11 py-2.5 bg-[#090d14] border border-white/[0.08] rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors"
                     />
                     <button
                       type="button"
@@ -1653,7 +1653,7 @@ export const SettingsView: React.FC = () => {
                           <div
                             key={i}
                             className={`h-1 flex-1 rounded-full transition-all ${
-                              i <= passStrength ? passStrengthColor : 'bg-slate-700'
+                              i <= passStrength ? passStrengthColor : 'bg-white/[0.08]'
                             }`}
                           />
                         ))}
@@ -1677,12 +1677,12 @@ export const SettingsView: React.FC = () => {
                     value={confirmPass}
                     onChange={(e) => setConfirmPass(e.target.value)}
                     placeholder="Ulangi password baru"
-                    className={`w-full px-3.5 py-2.5 bg-slate-800/80 border rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none transition-colors ${
+                    className={`w-full px-3.5 py-2.5 bg-[#090d14] border rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none transition-colors ${
                       confirmPass && newPass !== confirmPass
                         ? 'border-rose-500'
                         : confirmPass && newPass === confirmPass
                         ? 'border-emerald-500'
-                        : 'border-slate-700 focus:border-emerald-500'
+                        : 'border-white/[0.08] focus:border-emerald-500'
                     }`}
                   />
                 </div>
@@ -1697,7 +1697,7 @@ export const SettingsView: React.FC = () => {
               </form>
 
               {/* Security Info */}
-              <div className="pt-4 border-t border-slate-800">
+              <div className="pt-4 border-t border-white/[0.08]">
                 <h3 className="text-xs font-bold text-slate-300 mb-3">Rekomendasi Keamanan</h3>
                 <div className="space-y-2">
                   {[
@@ -1718,7 +1718,7 @@ export const SettingsView: React.FC = () => {
 
           {/* NOTIFICATIONS */}
           {activeSection === 'notifications' && (
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-5">
+            <div className="bg-[#0e1520] border border-white/[0.08] rounded-xl p-6 space-y-5">
               <h2 className="text-sm font-bold text-white">Preferensi Notifikasi</h2>
               <div className="space-y-4">
                 {[
@@ -1739,7 +1739,7 @@ export const SettingsView: React.FC = () => {
                 ].map((item) => (
                   <div
                     key={item.id}
-                    className="flex items-center justify-between p-4 bg-slate-800/40 border border-slate-800 rounded-xl"
+                    className="flex items-center justify-between p-4 bg-white/[0.03] border border-white/[0.08] rounded-xl"
                   >
                     <div>
                       <div className="text-sm font-semibold text-slate-200">{item.label}</div>
@@ -1748,7 +1748,7 @@ export const SettingsView: React.FC = () => {
                     <button
                       onClick={() => item.set(!item.value)}
                       className={`relative w-11 h-6 rounded-full transition-colors ${
-                        item.value ? 'bg-emerald-600' : 'bg-slate-700'
+                        item.value ? 'bg-emerald-600' : 'bg-white/[0.08]'
                       }`}
                     >
                       <div
@@ -1766,7 +1766,7 @@ export const SettingsView: React.FC = () => {
 
           {/* APPEARANCE */}
           {activeSection === 'appearance' && (
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-5">
+            <div className="bg-[#0e1520] border border-white/[0.08] rounded-xl p-6 space-y-5">
               <h2 className="text-sm font-bold text-white">Tampilan</h2>
 
               <div>
@@ -1783,7 +1783,7 @@ export const SettingsView: React.FC = () => {
                       onClick={() => setAccentColor(c.id as AccentColor)}
                       className={`w-10 h-10 rounded-xl ${c.bgClass} transition-all cursor-pointer ${
                         accentColor === c.id
-                          ? 'ring-2 ring-white ring-offset-2 ring-offset-slate-900 scale-110 shadow-lg'
+                          ? 'ring-2 ring-white ring-offset-2 ring-offset-[#090d14] scale-110 shadow-lg'
                           : 'opacity-70 hover:opacity-100 hover:scale-105'
                       }`}
                       title={c.label}
@@ -1792,7 +1792,7 @@ export const SettingsView: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between p-4 bg-slate-800/40 border border-slate-800 rounded-xl">
+              <div className="flex items-center justify-between p-4 bg-white/[0.03] border border-white/[0.08] rounded-xl">
                 <div>
                   <div className="text-sm font-semibold text-slate-200">Mode Kompak</div>
                   <div className="text-xs text-slate-400 mt-0.5">Kurangi spasi untuk menampilkan lebih banyak konten</div>
@@ -1800,7 +1800,7 @@ export const SettingsView: React.FC = () => {
                 <button
                   onClick={() => setCompactMode(!compactMode)}
                   className={`relative w-11 h-6 rounded-full transition-colors cursor-pointer ${
-                    compactMode ? 'bg-emerald-600' : 'bg-slate-700'
+                    compactMode ? 'bg-emerald-600' : 'bg-white/[0.08]'
                   }`}
                 >
                   <div
@@ -1817,9 +1817,9 @@ export const SettingsView: React.FC = () => {
 
           {/* ABOUT */}
           {activeSection === 'about' && (
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-5">
+            <div className="bg-[#0e1520] border border-white/[0.08] rounded-xl p-6 space-y-5">
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                <div className="w-16 h-16 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-500/20">
                   <Globe className="w-8 h-8 text-slate-950" />
                 </div>
                 <div>
@@ -1839,14 +1839,14 @@ export const SettingsView: React.FC = () => {
                   { label: 'Frontend', value: 'React 19 + TypeScript + Vite' },
                   { label: 'Dikembangkan oleh', value: `${user?.business_name || 'Sentosa Retail'} IT Dept.` },
                 ].map((item) => (
-                  <div key={item.label} className="flex justify-between text-sm py-2 border-b border-slate-800 last:border-0">
+                  <div key={item.label} className="flex justify-between text-sm py-2 border-b border-white/[0.08] last:border-0">
                     <span className="text-slate-400">{item.label}</span>
                     <span className="text-slate-200 font-medium">{item.value}</span>
                   </div>
                 ))}
               </div>
 
-              <div className="p-3 bg-slate-800/40 border border-slate-700 rounded-xl text-xs text-slate-400">
+              <div className="p-3 bg-white/[0.03] border border-white/[0.08] rounded-xl text-xs text-slate-400">
                 © 2026 {user?.business_name || 'Sentosa Retail Group'}. Seluruh data transaksi dilindungi dan dienkripsi.
               </div>
             </div>

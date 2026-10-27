@@ -181,7 +181,7 @@ export function App() {
           className="lg:hidden fixed inset-0 z-50 flex animate-in fade-in duration-200"
           onClick={() => setMobileSidebarOpen(false)}
         >
-          <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm" />
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" />
           <div
             className="relative z-10 w-72 max-w-[85vw] h-full shadow-2xl"
             onClick={(e) => e.stopPropagation()}

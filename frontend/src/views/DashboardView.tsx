@@ -119,40 +119,169 @@ export const DashboardView: React.FC<{ onNavigate: (tab: string) => void }> = ({
   return (
     <section className="min-h-screen bg-[var(--app-bg)] p-4 text-[var(--text-primary)] sm:p-6 lg:p-8">
       <div className="mx-auto max-w-7xl">
-        <header className="mb-7 flex flex-col gap-5 border-b border-slate-800 pb-6 lg:flex-row lg:items-end lg:justify-between">
+        <header className="mb-6 flex flex-col gap-4 border-b border-white/[0.08] pb-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-emerald-400">Sentosa POS / Overview</p>
-            <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">{content.title}</h1>
-            <p className="mt-2 max-w-2xl text-sm text-slate-500">Halo, {user?.full_name}. {content.subtitle}</p>
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-emerald-400">Ringkasan Sistem</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            </div>
+            <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">{content.title}</h1>
+            <p className="mt-1 max-w-2xl text-xs sm:text-sm text-slate-400">Halo, {user?.full_name}. {content.subtitle}</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            {currentBranch && <div className="rounded-md border border-slate-800 bg-slate-900 px-3 py-2 text-xs text-slate-500">Cabang <strong className="text-slate-100">{currentBranch.name}</strong></div>}
+            {currentBranch && (
+              <div className="rounded-lg border border-white/[0.08] bg-[#0e1520] px-3 py-1.5 text-xs text-slate-400">
+                Cabang <strong className="text-white font-medium ml-1">{currentBranch.name}</strong>
+              </div>
+            )}
             <label htmlFor="dashboard-range" className="sr-only">Rentang waktu dashboard</label>
-            <select id="dashboard-range" value={selectedRange} onChange={(event) => setSelectedRange(event.target.value)} className="rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-xs font-semibold text-slate-100 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-900">
+            <select
+              id="dashboard-range"
+              value={selectedRange}
+              onChange={(event) => setSelectedRange(event.target.value)}
+              className="rounded-lg border border-white/[0.08] bg-[#090d14] px-3 py-1.5 text-xs font-semibold text-slate-200 outline-none transition focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/20 cursor-pointer"
+            >
               {ranges.map((range) => <option key={range.label} value={range.label}>{range.label}</option>)}
             </select>
           </div>
         </header>
 
-        <div className="mb-6 grid gap-px overflow-hidden rounded-lg border border-slate-800 bg-slate-800 sm:grid-cols-2 xl:grid-cols-4">
-          {cards.map(({ label, value, icon: Icon }) => <div key={label} className="bg-slate-900 p-5"><div className="flex items-center justify-between"><span className="text-xs font-medium text-slate-500">{label}</span><Icon className="h-4 w-4 text-emerald-400" /></div><p className="mt-4 text-2xl font-bold tracking-tight text-white">{value}</p><p className="mt-1 text-[11px] text-slate-400">{selectedRange} terakhir</p></div>)}
+        {/* KPI Grid */}
+        <div className="mb-6 grid gap-px overflow-hidden rounded-xl border border-white/[0.08] bg-white/[0.08] sm:grid-cols-2 xl:grid-cols-4">
+          {cards.map(({ label, value, icon: Icon }) => (
+            <div key={label} className="bg-[#0e1520] p-4 sm:p-5 flex flex-col justify-between">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-slate-400">{label}</span>
+                <div className="w-7 h-7 rounded-md bg-white/[0.04] border border-white/[0.06] flex items-center justify-center text-emerald-400">
+                  <Icon className="h-3.5 w-3.5" />
+                </div>
+              </div>
+              <div className="mt-4">
+                <p className="text-xl sm:text-2xl font-bold tracking-tight text-white font-mono">{value}</p>
+                <p className="mt-1 text-[11px] text-slate-500">{selectedRange} terakhir</p>
+              </div>
+            </div>
+          ))}
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-[1.45fr_1fr]">
-          <div className="rounded-lg border border-slate-800 bg-slate-900 p-5 sm:p-6">
-            <div className="flex items-start justify-between"><div><p className="text-xs font-bold uppercase tracking-wider text-slate-400">Produk terlaris</p><h2 className="mt-1 text-lg font-bold text-white">Performa penjualan</h2></div>{loading && <span className="text-xs text-emerald-400">Memuat...</span>}</div>
-            {topProducts.length ? <div className="mt-6 flex flex-col gap-4">{topProducts.map((product) => <div key={product.product_id}><div className="mb-1 flex justify-between gap-3 text-xs"><span className="truncate font-medium text-slate-200">{product.product_name}</span><span className="shrink-0 text-slate-500">{product.total_qty} unit</span></div><div className="h-2 overflow-hidden rounded-full bg-slate-800"><div className="h-full rounded-full bg-emerald-600 transition-all" style={{ width: `${Math.max((product.total_qty / maxProductQty) * 100, 4)}%` }} /></div></div>)}</div> : <div className="mt-6 flex min-h-32 items-center justify-center rounded-md border border-dashed border-slate-800 text-sm text-slate-400">Belum ada data penjualan pada periode ini.</div>}
+        {/* Sales Performance & Payment Mix */}
+        <div className="grid gap-5 lg:grid-cols-[1.45fr_1fr]">
+          <div className="rounded-xl border border-white/[0.08] bg-[#0e1520] p-4 sm:p-5">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-[11px] font-mono font-semibold uppercase tracking-wider text-slate-400">Produk Terlaris</p>
+                <h2 className="mt-0.5 text-base font-bold text-white">Performa Volume Penjualan</h2>
+              </div>
+              {loading && <span className="text-xs text-emerald-400 font-mono">Memuat...</span>}
+            </div>
+            {topProducts.length ? (
+              <div className="mt-5 flex flex-col gap-3.5">
+                {topProducts.map((product) => (
+                  <div key={product.product_id}>
+                    <div className="mb-1 flex justify-between gap-3 text-xs">
+                      <span className="truncate font-medium text-slate-200">{product.product_name}</span>
+                      <span className="shrink-0 text-slate-400 font-mono">{product.total_qty} unit</span>
+                    </div>
+                    <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
+                      <div className="h-full rounded-full bg-emerald-500 transition-all" style={{ width: `${Math.max((product.total_qty / maxProductQty) * 100, 4)}%` }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="mt-6 flex min-h-32 items-center justify-center rounded-lg border border-dashed border-white/10 text-xs text-slate-500">
+                Belum ada data penjualan pada periode ini.
+              </div>
+            )}
           </div>
 
-          <div className="rounded-lg border border-slate-800 bg-slate-900 p-5 sm:p-6"><p className="text-xs font-bold uppercase tracking-wider text-slate-400">Metode pembayaran</p><h2 className="mt-1 text-lg font-bold text-white">Komposisi pendapatan</h2><div className="mt-7 flex items-center gap-5"><div className="relative grid size-28 shrink-0 place-items-center rounded-full" style={{ background: `conic-gradient(#059669 ${cashPercent}%, #cbd5e1 ${cashPercent}% 100%)` }}><div className="grid size-20 place-items-center rounded-full bg-slate-900"><span className="text-xl font-bold text-white">{cashPercent}%</span></div></div><div className="flex flex-col gap-3 text-xs"><div><span className="mr-2 inline-block size-2 rounded-full bg-emerald-600" />Tunai <strong className="ml-2 text-slate-100">{formatIDR(summary?.cash_sales ?? 0)}</strong></div><div><span className="mr-2 inline-block size-2 rounded-full bg-slate-300" />Non-tunai <strong className="ml-2 text-slate-100">{formatIDR(summary?.non_cash_sales ?? 0)}</strong></div></div></div><div className="mt-7 border-t border-slate-800 pt-4 text-xs text-slate-500">Total pendapatan <strong className="float-right text-slate-100">{formatIDR(summary?.total_sales ?? 0)}</strong></div></div>
+          <div className="rounded-xl border border-white/[0.08] bg-[#0e1520] p-4 sm:p-5 flex flex-col justify-between">
+            <div>
+              <p className="text-[11px] font-mono font-semibold uppercase tracking-wider text-slate-400">Metode Pembayaran</p>
+              <h2 className="mt-0.5 text-base font-bold text-white">Komposisi Pendapatan</h2>
+              <div className="mt-6 flex items-center gap-5">
+                <div className="relative grid size-24 shrink-0 place-items-center rounded-full" style={{ background: `conic-gradient(#10b981 ${cashPercent}%, #334155 ${cashPercent}% 100%)` }}>
+                  <div className="grid size-18 place-items-center rounded-full bg-[#0e1520]">
+                    <span className="text-lg font-bold text-white font-mono">{cashPercent}%</span>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-2.5 text-xs">
+                  <div className="flex items-center">
+                    <span className="mr-2 inline-block size-2 rounded-full bg-emerald-500" />
+                    <span className="text-slate-400">Tunai</span>
+                    <strong className="ml-2 text-white font-mono">{formatIDR(summary?.cash_sales ?? 0)}</strong>
+                  </div>
+                  <div className="flex items-center">
+                    <span className="mr-2 inline-block size-2 rounded-full bg-slate-600" />
+                    <span className="text-slate-400">Non-tunai</span>
+                    <strong className="ml-2 text-white font-mono">{formatIDR(summary?.non_cash_sales ?? 0)}</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="mt-6 border-t border-white/[0.08] pt-3 text-xs text-slate-400 flex justify-between items-center">
+              <span>Total omset periode ini</span>
+              <strong className="text-emerald-400 font-mono text-sm font-bold">{formatIDR(summary?.total_sales ?? 0)}</strong>
+            </div>
+          </div>
         </div>
 
-        <div className="mt-6 grid gap-6 lg:grid-cols-[1.45fr_1fr]">
-          <div className="rounded-lg border border-slate-800 bg-slate-900 p-5 sm:p-6"><p className="text-xs font-bold uppercase tracking-wider text-slate-400">Ringkasan operasional</p><div className="mt-4 grid gap-3 sm:grid-cols-3"><div className="rounded-md bg-slate-900/70 p-4"><p className="text-xs text-slate-500">Total transaksi</p><p className="mt-2 text-xl font-bold text-white">{summary?.total_orders ?? 0}</p></div><div className="rounded-md bg-slate-900/70 p-4"><p className="text-xs text-slate-500">Item terjual</p><p className="mt-2 text-xl font-bold text-white">{summary?.items_sold ?? 0}</p></div><div className="rounded-md bg-slate-900/70 p-4"><p className="text-xs text-slate-500">Nilai rata-rata</p><p className="mt-2 text-xl font-bold text-white">{formatIDR(summary?.average_order_value ?? 0)}</p></div></div></div>
-          <div className="rounded-lg border border-slate-800 bg-slate-900 p-5 sm:p-6"><p className="text-xs font-bold uppercase tracking-wider text-slate-400">Akses cepat</p><div className="mt-3 flex flex-col gap-1">{quickActions.map(([tab, label]) => <button key={tab} onClick={() => onNavigate(tab)} className="flex items-center justify-between border-b border-slate-800 py-3 text-left text-sm font-medium text-slate-200 transition hover:text-emerald-400"><span>{label}</span><ArrowUpRight className="h-4 w-4" /></button>)}</div></div>
+        {/* Operational Overview & Quick Access */}
+        <div className="mt-5 grid gap-5 lg:grid-cols-[1.45fr_1fr]">
+          <div className="rounded-xl border border-white/[0.08] bg-[#0e1520] p-4 sm:p-5">
+            <p className="text-[11px] font-mono font-semibold uppercase tracking-wider text-slate-400">Ringkasan Operasional</p>
+            <div className="mt-3.5 grid gap-3 sm:grid-cols-3">
+              <div className="rounded-lg bg-[#090d14] border border-white/[0.06] p-3.5">
+                <p className="text-xs text-slate-400">Total Transaksi</p>
+                <p className="mt-1.5 text-lg font-bold text-white font-mono">{summary?.total_orders ?? 0}</p>
+              </div>
+              <div className="rounded-lg bg-[#090d14] border border-white/[0.06] p-3.5">
+                <p className="text-xs text-slate-400">Item Terjual</p>
+                <p className="mt-1.5 text-lg font-bold text-white font-mono">{summary?.items_sold ?? 0}</p>
+              </div>
+              <div className="rounded-lg bg-[#090d14] border border-white/[0.06] p-3.5">
+                <p className="text-xs text-slate-400">Rata-rata Order</p>
+                <p className="mt-1.5 text-lg font-bold text-white font-mono">{formatIDR(summary?.average_order_value ?? 0)}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-white/[0.08] bg-[#0e1520] p-4 sm:p-5">
+            <p className="text-[11px] font-mono font-semibold uppercase tracking-wider text-slate-400">Akses Cepat</p>
+            <div className="mt-2.5 flex flex-col divide-y divide-white/[0.06]">
+              {quickActions.map(([tab, label]) => (
+                <button
+                  key={tab}
+                  onClick={() => onNavigate(tab)}
+                  className="flex items-center justify-between py-2.5 text-left text-xs font-medium text-slate-300 transition hover:text-emerald-400 cursor-pointer group"
+                >
+                  <span>{label}</span>
+                  <ArrowUpRight className="h-3.5 w-3.5 text-slate-500 group-hover:text-emerald-400 transition-colors" />
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
-        {user?.role === 'owner' && performers.length > 0 && <div className="mt-6 rounded-lg border border-slate-800 bg-slate-900 p-5 sm:p-6"><p className="text-xs font-bold uppercase tracking-wider text-slate-400">Performa kasir</p><h2 className="mt-1 text-lg font-bold text-white">Kontribusi penjualan</h2><div className="mt-5 grid gap-4 md:grid-cols-2">{performers.map((person) => <div key={person.cashier_name}><div className="mb-1 flex justify-between text-xs"><span className="font-medium text-slate-200">{person.cashier_name}</span><span className="text-slate-500">{formatIDR(person.total_sales)}</span></div><div className="h-2 rounded-full bg-slate-800"><div className="h-full rounded-full bg-slate-700" style={{ width: `${Math.max((person.total_sales / maxPerformance) * 100, 4)}%` }} /></div></div>)}</div></div>}
+        {user?.role === 'owner' && performers.length > 0 && (
+          <div className="mt-5 rounded-xl border border-white/[0.08] bg-[#0e1520] p-4 sm:p-5">
+            <p className="text-[11px] font-mono font-semibold uppercase tracking-wider text-slate-400">Performa Kasir</p>
+            <h2 className="mt-0.5 text-base font-bold text-white">Kontribusi Penjualan Tim</h2>
+            <div className="mt-4 grid gap-4 md:grid-cols-2">
+              {performers.map((person) => (
+                <div key={person.cashier_name}>
+                  <div className="mb-1 flex justify-between text-xs">
+                    <span className="font-medium text-slate-200">{person.cashier_name}</span>
+                    <span className="text-slate-400 font-mono">{formatIDR(person.total_sales)}</span>
+                  </div>
+                  <div className="h-1.5 rounded-full bg-white/[0.06]">
+                    <div className="h-full rounded-full bg-emerald-500" style={{ width: `${Math.max((person.total_sales / maxPerformance) * 100, 4)}%` }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );

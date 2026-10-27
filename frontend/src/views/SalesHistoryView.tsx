@@ -122,7 +122,7 @@ export const SalesHistoryView: FC = () => {
             })
           }
           disabled={sales.length === 0 || loading}
-          className="flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20 transition-all cursor-pointer active:scale-95 disabled:opacity-50 self-start sm:self-auto"
+          className="flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm transition-colors cursor-pointer disabled:opacity-50 self-start sm:self-auto"
           title="Ekspor rekap transaksi ini ke format PDF siap cetak"
         >
           <FileDown className="w-4 h-4" />
@@ -131,33 +131,33 @@ export const SalesHistoryView: FC = () => {
       </div>
 
       {/* Sales Table Card */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-sm">
-        <div className="p-4 border-b border-slate-800 flex items-center justify-between">
+      <div className="bg-[#0e1520] border border-white/[0.08] rounded-xl overflow-hidden shadow-sm">
+        <div className="p-3.5 border-b border-white/[0.08] flex items-center justify-between bg-black/10">
           <div className="flex items-center gap-2">
             <Receipt className="w-4 h-4 text-emerald-400" />
-            <h2 className="text-sm font-semibold text-white">Daftar Transaksi Terbaru</h2>
+            <h2 className="text-sm font-semibold text-white">Daftar Transaksi</h2>
           </div>
-          <span className="text-xs text-slate-400">Total: {filteredSales.length} Transaksi</span>
+          <span className="text-xs text-slate-400 font-mono">Total: {filteredSales.length} Transaksi</span>
         </div>
 
-        <div className="p-4 border-b border-slate-800 flex flex-col sm:flex-row gap-3">
+        <div className="p-3 border-b border-white/[0.08] flex flex-col sm:flex-row gap-3 bg-black/5">
           <div className="relative flex-1 max-w-lg">
-            <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               value={searchQuery}
               onChange={(event) => { setSearchQuery(event.target.value); setPage(1); }}
               placeholder="Cari nomor struk, kasir, metode pembayaran..."
-              className="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-800/80 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+              className="w-full pl-9 pr-4 py-2 rounded-lg bg-[#090d14] border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/60"
               aria-label="Cari transaksi"
             />
           </div>
-          <span className="self-center text-xs text-slate-500">Halaman {page} dari {totalPages}</span>
+          <span className="self-center text-xs text-slate-400 font-mono">Halaman {page} dari {totalPages}</span>
         </div>
 
         {/* Mobile Transaction Cards (Visible on mobile/tablet) */}
-        <div className="md:hidden divide-y divide-slate-800/80">
+        <div className="md:hidden divide-y divide-white/[0.06]">
           {loading ? (
-            <div className="p-8 text-center text-slate-500 text-xs">
+            <div className="p-8 text-center text-slate-500 text-xs font-mono">
               Memuat daftar transaksi...
             </div>
           ) : sales.length === 0 ? (
@@ -166,18 +166,18 @@ export const SalesHistoryView: FC = () => {
             </div>
           ) : (
             paginatedSales.map((s) => (
-              <div key={s.id} className="p-4 space-y-2.5">
+              <div key={s.id} className="p-3.5 space-y-2">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
-                    <div className="text-xs font-bold text-white font-mono">{s.receipt_number}</div>
+                    <div className="text-xs font-semibold text-white font-mono">{s.receipt_number}</div>
                     <div className="text-[10px] text-slate-400 mt-0.5">{new Date(s.created_at).toLocaleString('id-ID')}</div>
                   </div>
                   {s.status === 'completed' ? (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                    <span className="inline-block px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
                       Selesai
                     </span>
                   ) : (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-500/15 text-rose-300 border border-rose-500/30">
+                    <span className="inline-block px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-rose-500/10 text-rose-300 border border-rose-500/20">
                       Void
                     </span>
                   )}
@@ -185,7 +185,7 @@ export const SalesHistoryView: FC = () => {
 
                 <div className="flex items-center justify-between text-xs pt-1">
                   <div className="flex items-center gap-2">
-                    <span className="uppercase px-2 py-0.5 rounded bg-slate-800 text-[10px] font-semibold text-slate-300 border border-slate-700">
+                    <span className="uppercase px-1.5 py-0.5 rounded bg-white/[0.04] text-[10px] font-mono font-medium text-slate-300 border border-white/10">
                       {s.payment_method}
                     </span>
                     <span className="text-slate-400 text-[11px]">
@@ -197,10 +197,10 @@ export const SalesHistoryView: FC = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-end gap-2 pt-1 border-t border-slate-800/60">
+                <div className="flex items-center justify-end gap-2 pt-1 border-t border-white/[0.06]">
                   <button
                     onClick={() => viewSaleDetail(s.id)}
-                    className="flex-1 py-1.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold inline-flex items-center justify-center gap-1.5 border border-slate-700 active:scale-95 transition-all"
+                    className="flex-1 py-1.5 px-3 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-slate-200 text-xs font-medium inline-flex items-center justify-center gap-1.5 border border-white/10 transition-colors"
                   >
                     <Eye className="w-3.5 h-3.5 text-emerald-400" />
                     <span>Lihat Struk</span>
@@ -208,7 +208,7 @@ export const SalesHistoryView: FC = () => {
                   {canVoid && s.status === 'completed' && (
                     <button
                       onClick={() => setVoidTarget(s)}
-                      className="py-1.5 px-3 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 text-xs font-semibold inline-flex items-center justify-center gap-1.5 border border-rose-500/20 active:scale-95 transition-all"
+                      className="py-1.5 px-3 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 text-xs font-medium inline-flex items-center justify-center gap-1.5 border border-rose-500/20 transition-colors"
                     >
                       <Ban className="w-3.5 h-3.5 text-rose-400" />
                       <span>Void</span>
@@ -223,7 +223,7 @@ export const SalesHistoryView: FC = () => {
         {/* Desktop Table */}
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-slate-800/50 text-slate-400 font-semibold border-b border-slate-800">
+            <thead className="bg-[#090d14]/70 text-slate-400 font-medium border-b border-white/[0.08]">
               <tr>
                 <th className="px-4 py-3">No. Struk</th>
                 <th className="px-4 py-3">Waktu Transaksi</th>
@@ -234,10 +234,10 @@ export const SalesHistoryView: FC = () => {
                 <th className="px-4 py-3 text-right">Aksi</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60 font-mono">
+            <tbody className="divide-y divide-white/[0.04] font-mono">
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-slate-500 font-sans">
+                  <td colSpan={7} className="px-4 py-8 text-center text-slate-500 font-mono">
                     Memuat daftar transaksi...
                   </td>
                 </tr>
@@ -249,8 +249,8 @@ export const SalesHistoryView: FC = () => {
                 </tr>
               ) : (
                 paginatedSales.map((s) => (
-                  <tr key={s.id} className="hover:bg-slate-800/30 transition-colors">
-                    <td className="px-4 py-3 font-bold text-white">
+                  <tr key={s.id} className="hover:bg-white/[0.02] transition-colors">
+                    <td className="px-4 py-3 font-semibold text-white">
                       {s.receipt_number}
                     </td>
                     <td className="px-4 py-3 text-slate-400 text-[11px] font-sans">
@@ -260,7 +260,7 @@ export const SalesHistoryView: FC = () => {
                       {s.cashier_name}
                     </td>
                     <td className="px-4 py-3 text-center font-sans">
-                      <span className="inline-block uppercase px-2 py-0.5 rounded bg-slate-800 text-[10px] font-semibold text-slate-300 border border-slate-700">
+                      <span className="inline-block uppercase px-2 py-0.5 rounded bg-white/[0.04] text-[10px] font-mono font-medium text-slate-300 border border-white/10">
                         {s.payment_method}
                       </span>
                     </td>
@@ -269,12 +269,12 @@ export const SalesHistoryView: FC = () => {
                     </td>
                     <td className="px-4 py-3 text-center font-sans">
                       {s.status === 'completed' ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                        <span className="inline-block px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
                           Selesai
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-500/20 text-rose-300 border border-rose-500/30">
-                          Dibatalkan (Void)
+                        <span className="inline-block px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-rose-500/10 text-rose-300 border border-rose-500/20">
+                          Void
                         </span>
                       )}
                     </td>
@@ -282,15 +282,15 @@ export const SalesHistoryView: FC = () => {
                       <div className="flex items-center justify-end gap-1.5">
                         <button
                           onClick={() => viewSaleDetail(s.id)}
-                          className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors inline-flex items-center gap-1 text-[11px]"
+                          className="px-2.5 py-1 rounded-md bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 hover:text-white border border-white/10 transition-colors inline-flex items-center gap-1 text-[11px] cursor-pointer"
                         >
-                          <Eye className="w-3.5 h-3.5" />
+                          <Eye className="w-3.5 h-3.5 text-emerald-400" />
                           <span>Struk</span>
                         </button>
                         {canVoid && s.status === 'completed' && (
                           <button
                             onClick={() => setVoidTarget(s)}
-                            className="p-1.5 rounded-lg bg-slate-800 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 transition-colors"
+                            className="p-1 rounded-md bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 transition-colors cursor-pointer"
                             title="Batalkan Transaksi (Void)"
                           >
                             <Ban className="w-3.5 h-3.5" />
@@ -305,22 +305,22 @@ export const SalesHistoryView: FC = () => {
           </table>
         </div>
 
-        <div className="p-3 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
-          <span>Menampilkan {paginatedSales.length} dari {filteredSales.length} transaksi</span>
+        <div className="p-3 border-t border-white/[0.08] flex items-center justify-between text-xs text-slate-400 bg-black/10">
+          <span className="font-mono">Menampilkan {paginatedSales.length} dari {filteredSales.length} transaksi</span>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setPage((current) => Math.max(1, current - 1))}
               disabled={page === 1 || loading}
-              className="p-1.5 rounded-lg bg-slate-800 border border-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="p-1.5 rounded-md bg-white/[0.03] hover:bg-white/[0.08] border border-white/10 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
               aria-label="Halaman sebelumnya"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <span className="font-mono text-slate-300">{page}/{totalPages}</span>
+            <span className="font-mono text-slate-300 font-semibold">{page}/{totalPages}</span>
             <button
               onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
               disabled={page === totalPages || loading}
-              className="p-1.5 rounded-lg bg-slate-800 border border-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="p-1.5 rounded-md bg-white/[0.03] hover:bg-white/[0.08] border border-white/10 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
               aria-label="Halaman berikutnya"
             >
               <ChevronRight className="w-4 h-4" />
@@ -331,22 +331,22 @@ export const SalesHistoryView: FC = () => {
 
       {/* Sale Detail & Printable Receipt Modal */}
       {selectedSale && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-sm max-h-[92vh] flex flex-col overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="p-4 border-b border-slate-800 flex items-center justify-between flex-shrink-0">
-              <span className="font-bold text-white text-sm">Struk Transaksi Penjualan</span>
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-[#0e1520] border border-white/10 rounded-2xl w-full max-w-sm max-h-[92vh] flex flex-col overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="p-4 border-b border-white/[0.08] flex items-center justify-between flex-shrink-0 bg-white/[0.02]">
+              <span className="font-semibold text-white text-sm">Struk Transaksi Penjualan</span>
               <button
                 onClick={() => setSelectedSale(null)}
-                className="text-slate-400 hover:text-white p-1 rounded-lg"
+                className="text-slate-400 hover:text-white p-1 rounded-md hover:bg-white/10 transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="p-4 sm:p-5 bg-slate-950 flex justify-center overflow-y-auto flex-1">
+            <div className="p-4 sm:p-5 bg-[#090d14] flex justify-center overflow-y-auto flex-1">
               <div
                 id="printable-receipt"
-                className="bg-white text-slate-950 font-mono text-[11px] p-5 w-72 rounded shadow border border-slate-200"
+                className="bg-white text-slate-950 font-mono text-[11px] p-5 w-72 rounded-lg shadow-lg border border-slate-300"
               >
                 <div className="text-center pb-3 border-b border-dashed border-slate-400">
                   <div className="font-bold text-sm tracking-wide">SENTOSA RETAIL GROUP</div>
@@ -413,19 +413,19 @@ export const SalesHistoryView: FC = () => {
               </div>
             </div>
 
-            <div className="p-4 border-t border-slate-800 bg-slate-900 flex gap-2">
+            <div className="p-4 border-t border-white/[0.08] bg-[#0e1520] flex gap-2">
               <button
                 type="button"
                 onClick={() => window.print()}
-                className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-xs font-semibold text-white flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                className="flex-1 py-2 bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 rounded-lg text-xs font-semibold text-white flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
               >
-                <Printer className="w-4 h-4" />
+                <Printer className="w-4 h-4 text-emerald-400" />
                 <span>Cetak Ulang</span>
               </button>
               <button
                 type="button"
                 onClick={() => setSelectedSale(null)}
-                className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 rounded-xl text-xs font-bold text-white transition-colors cursor-pointer"
+                className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-lg text-xs font-semibold text-white transition-colors cursor-pointer"
               >
                 Tutup
               </button>
@@ -436,15 +436,15 @@ export const SalesHistoryView: FC = () => {
 
       {/* Void Confirmation Modal */}
       {voidTarget && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl p-6 space-y-4">
-            <div className="w-12 h-12 rounded-2xl bg-rose-500/20 text-rose-400 flex items-center justify-center mx-auto">
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#0e1520] border border-white/10 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl p-6 space-y-4">
+            <div className="w-12 h-12 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center mx-auto">
               <AlertTriangle className="w-6 h-6" />
             </div>
 
             <div className="text-center">
-              <h3 className="text-base font-bold text-white">Batalkan Transaksi (Void)?</h3>
-              <p className="text-xs text-slate-400 mt-1">
+              <h3 className="text-base font-semibold text-white">Batalkan Transaksi (Void)?</h3>
+              <p className="text-xs text-slate-400 mt-1 leading-relaxed">
                 Transaksi <span className="font-mono font-bold text-white">{voidTarget.receipt_number}</span> senilai{' '}
                 <span className="font-bold text-emerald-400">{formatIDR(voidTarget.total_amount)}</span> akan dibatalkan.
                 Stok barang akan secara otomatis dikembalikan ke gudang cabang.
@@ -452,7 +452,7 @@ export const SalesHistoryView: FC = () => {
             </div>
 
             {voidError && (
-              <div className="p-3 bg-rose-500/15 border border-rose-500/30 rounded-xl text-rose-400 text-xs text-center">
+              <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-lg text-rose-300 text-xs text-center">
                 {voidError}
               </div>
             )}
@@ -461,7 +461,7 @@ export const SalesHistoryView: FC = () => {
               <button
                 type="button"
                 onClick={() => setVoidTarget(null)}
-                className="flex-1 py-2.5 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800 text-xs font-semibold"
+                className="flex-1 py-2.5 rounded-lg border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] text-slate-300 text-xs font-medium cursor-pointer transition-colors"
               >
                 Jangan Batalkan
               </button>
@@ -469,7 +469,7 @@ export const SalesHistoryView: FC = () => {
                 type="button"
                 disabled={voidLoading}
                 onClick={executeVoid}
-                className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 disabled:opacity-50 text-white text-xs font-bold shadow-lg shadow-rose-600/30 cursor-pointer"
+                className="flex-1 py-2.5 rounded-lg bg-rose-600 hover:bg-rose-500 disabled:opacity-50 text-white text-xs font-semibold shadow-sm cursor-pointer transition-colors"
               >
                 {voidLoading ? 'Membatalkan...' : 'Ya, Batalkan Transaksi'}
               </button>

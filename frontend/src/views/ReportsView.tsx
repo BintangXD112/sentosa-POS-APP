@@ -79,11 +79,11 @@ export const ReportsView: React.FC = () => {
   };
 
   return (
-    <div className={`max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-5 sm:space-y-6 transition-opacity ${loading ? 'opacity-50' : 'opacity-100'}`}>
+    <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 transition-opacity ${loading ? 'opacity-50' : 'opacity-100'}`}>
       {/* View Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <h1 className="text-lg sm:text-xl font-bold text-white tracking-tight">Laporan & Analitik Penjualan</h1>
+          <h1 className="text-xl font-bold text-white tracking-tight">Laporan & Analitik Penjualan</h1>
           <p className="text-xs text-slate-400 mt-0.5">
             Ringkasan omset dan performa kasir di {currentBranch?.name}
           </p>
@@ -92,12 +92,12 @@ export const ReportsView: React.FC = () => {
         {/* Controls: Date Presets & Export PDF */}
         <div className="flex flex-wrap items-center gap-2">
           {/* Date Preset Buttons */}
-          <div className="flex items-center gap-1 bg-slate-900 border border-slate-800 p-1 rounded-xl w-full sm:w-auto">
+          <div className="flex items-center gap-1 bg-[#0e1520] border border-white/[0.08] p-1 rounded-lg w-full sm:w-auto">
             <button
               onClick={() => setDateRange('today')}
-              className={`flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-center cursor-pointer ${
+              className={`flex-1 sm:flex-none px-3 py-1.5 rounded-md text-xs font-medium transition-colors text-center cursor-pointer ${
                 dateRange === 'today'
-                  ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30'
+                  ? 'bg-emerald-600 text-white shadow-sm'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -105,9 +105,9 @@ export const ReportsView: React.FC = () => {
             </button>
             <button
               onClick={() => setDateRange('7days')}
-              className={`flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-center cursor-pointer ${
+              className={`flex-1 sm:flex-none px-3 py-1.5 rounded-md text-xs font-medium transition-colors text-center cursor-pointer ${
                 dateRange === '7days'
-                  ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30'
+                  ? 'bg-emerald-600 text-white shadow-sm'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -115,9 +115,9 @@ export const ReportsView: React.FC = () => {
             </button>
             <button
               onClick={() => setDateRange('30days')}
-              className={`flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-center cursor-pointer ${
+              className={`flex-1 sm:flex-none px-3 py-1.5 rounded-md text-xs font-medium transition-colors text-center cursor-pointer ${
                 dateRange === '30days'
-                  ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30'
+                  ? 'bg-emerald-600 text-white shadow-sm'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -129,7 +129,7 @@ export const ReportsView: React.FC = () => {
           <button
             onClick={handleExportPdf}
             disabled={!data || loading}
-            className="flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20 transition-all cursor-pointer active:scale-95 disabled:opacity-50"
+            className="flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm transition-colors cursor-pointer disabled:opacity-50"
             title="Ekspor laporan ini ke format PDF siap cetak"
           >
             <FileDown className="w-4 h-4" />
@@ -141,75 +141,75 @@ export const ReportsView: React.FC = () => {
       {/* Top 4 KPI Metrics Cards (2 cols on mobile, 4 on desktop) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* Card 1: Total Sales */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 sm:p-4 shadow-sm relative overflow-hidden flex flex-col justify-between">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] sm:text-xs font-medium text-slate-400">Total Omset</span>
-            <div className="p-1.5 sm:p-2 bg-emerald-500/10 text-emerald-400 rounded-xl">
-              <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+        <div className="bg-[#0e1520] border border-white/[0.08] rounded-xl p-4 shadow-sm relative overflow-hidden flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs font-medium text-slate-400">Total Omset</span>
+            <div className="p-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-md">
+              <TrendingUp className="w-3.5 h-3.5" />
             </div>
           </div>
           <div>
-            <div className="text-base sm:text-2xl font-black text-white font-mono truncate">
+            <div className="text-xl sm:text-2xl font-bold text-white font-mono tracking-tight truncate">
               {formatIDR(summary.total_sales)}
             </div>
-            <div className="text-[10px] text-slate-500 mt-1 truncate">Pendapatan bersih</div>
+            <div className="text-[11px] text-slate-500 mt-1 truncate">Pendapatan kotor periode</div>
           </div>
         </div>
 
         {/* Card 2: Total Orders */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 sm:p-4 shadow-sm relative overflow-hidden flex flex-col justify-between">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] sm:text-xs font-medium text-slate-400">Transaksi</span>
-            <div className="p-1.5 sm:p-2 bg-blue-500/10 text-blue-400 rounded-xl">
-              <ShoppingBag className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+        <div className="bg-[#0e1520] border border-white/[0.08] rounded-xl p-4 shadow-sm relative overflow-hidden flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs font-medium text-slate-400">Transaksi Selesai</span>
+            <div className="p-1.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-md">
+              <ShoppingBag className="w-3.5 h-3.5" />
             </div>
           </div>
           <div>
-            <div className="text-base sm:text-2xl font-black text-white font-mono">
+            <div className="text-xl sm:text-2xl font-bold text-white font-mono tracking-tight">
               {summary.total_orders} <span className="text-xs font-sans font-normal text-slate-400">Struk</span>
             </div>
-            <div className="text-[10px] text-slate-500 mt-1 truncate">Transaksi sukses</div>
+            <div className="text-[11px] text-slate-500 mt-1 truncate">Transaksi sukses</div>
           </div>
         </div>
 
         {/* Card 3: Items Sold */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 sm:p-4 shadow-sm relative overflow-hidden flex flex-col justify-between">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] sm:text-xs font-medium text-slate-400">Item Terjual</span>
-            <div className="p-1.5 sm:p-2 bg-indigo-500/10 text-indigo-400 rounded-xl">
-              <BarChart3 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+        <div className="bg-[#0e1520] border border-white/[0.08] rounded-xl p-4 shadow-sm relative overflow-hidden flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs font-medium text-slate-400">Item Terjual</span>
+            <div className="p-1.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-md">
+              <BarChart3 className="w-3.5 h-3.5" />
             </div>
           </div>
           <div>
-            <div className="text-base sm:text-2xl font-black text-white font-mono">
+            <div className="text-xl sm:text-2xl font-bold text-white font-mono tracking-tight">
               {summary.items_sold} <span className="text-xs font-sans font-normal text-slate-400">Pcs</span>
             </div>
-            <div className="text-[10px] text-slate-500 mt-1 truncate">Kuantitas fisik</div>
+            <div className="text-[11px] text-slate-500 mt-1 truncate">Kuantitas produk keluar</div>
           </div>
         </div>
 
         {/* Card 4: Average Order Value */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 sm:p-4 shadow-sm relative overflow-hidden flex flex-col justify-between">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] sm:text-xs font-medium text-slate-400">Rata-rata (AOV)</span>
-            <div className="p-1.5 sm:p-2 bg-amber-500/10 text-amber-400 rounded-xl">
-              <DollarSign className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+        <div className="bg-[#0e1520] border border-white/[0.08] rounded-xl p-4 shadow-sm relative overflow-hidden flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs font-medium text-slate-400">Rata-rata (AOV)</span>
+            <div className="p-1.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-md">
+              <DollarSign className="w-3.5 h-3.5" />
             </div>
           </div>
           <div>
-            <div className="text-base sm:text-2xl font-black text-white font-mono truncate">
+            <div className="text-xl sm:text-2xl font-bold text-white font-mono tracking-tight truncate">
               {formatIDR(summary.average_order_value)}
             </div>
-            <div className="text-[10px] text-slate-500 mt-1 truncate">Nilai per struk</div>
+            <div className="text-[11px] text-slate-500 mt-1 truncate">Rata-rata per struk</div>
           </div>
         </div>
       </div>
 
       {/* Middle Section: Cash vs Non-Cash Split */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3">
+      <div className="bg-[#0e1520] border border-white/[0.08] rounded-xl p-4 sm:p-5 space-y-4 shadow-sm">
         <div className="flex items-center justify-between text-xs">
           <span className="font-semibold text-white">Distribusi Metode Pembayaran</span>
-          <span className="text-slate-400">Total: {formatIDR(summary.total_sales)}</span>
+          <span className="text-slate-400 font-mono">Total: {formatIDR(summary.total_sales)}</span>
         </div>
 
         {/* Progress bar */}
@@ -218,34 +218,34 @@ export const ReportsView: React.FC = () => {
           const nonCashPct = summary.total_sales > 0 ? 100 - cashPct : 50;
           return (
             <div className="space-y-3">
-              <div className="w-full bg-slate-800 h-3 rounded-full overflow-hidden flex">
+              <div className="w-full bg-[#090d14] h-2.5 rounded-full overflow-hidden flex border border-white/[0.06]">
                 <div style={{ width: `${cashPct}%` }} className="bg-emerald-500 h-full transition-all duration-500" title={`Tunai ${cashPct}%`} />
                 <div style={{ width: `${nonCashPct}%` }} className="bg-blue-500 h-full transition-all duration-500" title={`Non-Tunai ${nonCashPct}%`} />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                <div className="flex items-center justify-between p-3 rounded-xl bg-slate-800/40 border border-slate-800">
+                <div className="flex items-center justify-between p-3 rounded-lg bg-[#090d14] border border-white/[0.06]">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-3 h-3 rounded-full bg-emerald-500 flex-shrink-0" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 flex-shrink-0" />
                     <div>
-                      <div className="text-xs text-slate-400">Tunai (Cash)</div>
+                      <div className="text-[11px] text-slate-400">Tunai (Cash)</div>
                       <div className="text-sm font-bold text-white font-mono">{formatIDR(summary.cash_sales)}</div>
                     </div>
                   </div>
-                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  <span className="text-xs font-mono font-medium px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
                     {cashPct}%
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between p-3 rounded-xl bg-slate-800/40 border border-slate-800">
+                <div className="flex items-center justify-between p-3 rounded-lg bg-[#090d14] border border-white/[0.06]">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-3 h-3 rounded-full bg-blue-500 flex-shrink-0" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-blue-500 flex-shrink-0" />
                     <div>
-                      <div className="text-xs text-slate-400">Non-Tunai (QRIS/Transfer/Debit)</div>
+                      <div className="text-[11px] text-slate-400">Non-Tunai (QRIS / Transfer)</div>
                       <div className="text-sm font-bold text-white font-mono">{formatIDR(summary.non_cash_sales)}</div>
                     </div>
                   </div>
-                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                  <span className="text-xs font-mono font-medium px-2 py-0.5 rounded bg-blue-500/10 text-blue-300 border border-blue-500/20">
                     {nonCashPct}%
                   </span>
                 </div>
@@ -259,37 +259,40 @@ export const ReportsView: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
         {/* Top 5 Best Selling Products (7 cols) */}
-        <div className="lg:col-span-7 bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-sm">
-          <div className="p-4 border-b border-slate-800 flex items-center gap-2">
-            <Award className="w-4 h-4 text-amber-400" />
-            <h2 className="text-sm font-semibold text-white">Produk Paling Laris</h2>
+        <div className="lg:col-span-7 bg-[#0e1520] border border-white/[0.08] rounded-xl overflow-hidden shadow-sm">
+          <div className="p-3.5 border-b border-white/[0.08] flex items-center justify-between bg-black/10">
+            <div className="flex items-center gap-2">
+              <Award className="w-4 h-4 text-amber-400" />
+              <h2 className="text-sm font-semibold text-white">Produk Terlaris</h2>
+            </div>
+            <span className="text-xs text-slate-400 font-mono">Paling Banyak Terjual</span>
           </div>
 
-          <div className="divide-y divide-slate-800/60">
+          <div className="divide-y divide-white/[0.04]">
             {!data || data.top_products.length === 0 ? (
-              <div className="p-8 text-center text-slate-500 text-xs">
+              <div className="p-8 text-center text-slate-500 text-xs font-mono">
                 Belum ada data penjualan pada rentang waktu ini.
               </div>
             ) : (
               data.top_products.map((prod, index) => (
-                <div key={prod.product_id} className="p-4 flex items-center justify-between hover:bg-slate-800/30 transition-colors">
+                <div key={prod.product_id} className="p-3.5 flex items-center justify-between hover:bg-white/[0.02] transition-colors">
                   <div className="flex items-center gap-3">
-                    <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                      index === 0 ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20' :
-                      index === 1 ? 'bg-slate-300 text-slate-950' :
-                      index === 2 ? 'bg-amber-700 text-white' :
-                      'bg-slate-800 text-slate-400'
+                    <span className={`w-5 h-5 rounded flex items-center justify-center text-[10px] font-mono font-bold ${
+                      index === 0 ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' :
+                      index === 1 ? 'bg-slate-300/20 text-slate-200 border border-slate-300/30' :
+                      index === 2 ? 'bg-amber-700/20 text-amber-400 border border-amber-700/30' :
+                      'bg-white/[0.04] text-slate-400 border border-white/10'
                     }`}>
                       {index + 1}
                     </span>
                     <div>
-                      <div className="text-xs font-semibold text-white">{prod.product_name}</div>
-                      <div className="text-[11px] text-slate-400">Terjual: {prod.total_qty} unit</div>
+                      <div className="text-xs font-medium text-white">{prod.product_name}</div>
+                      <div className="text-[11px] text-slate-400 font-mono">Terjual: {prod.total_qty} unit</div>
                     </div>
                   </div>
 
-                  <div className="text-right">
-                    <div className="text-xs font-bold font-mono text-emerald-400">
+                  <div className="text-right font-mono">
+                    <div className="text-xs font-bold text-emerald-400">
                       {formatIDR(prod.total_sales)}
                     </div>
                   </div>
@@ -300,26 +303,29 @@ export const ReportsView: React.FC = () => {
         </div>
 
         {/* Cashier Performance (5 cols) */}
-        <div className="lg:col-span-5 bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-sm">
-          <div className="p-4 border-b border-slate-800 flex items-center gap-2">
-            <Users className="w-4 h-4 text-emerald-400" />
-            <h2 className="text-sm font-semibold text-white">Performa Kasir</h2>
+        <div className="lg:col-span-5 bg-[#0e1520] border border-white/[0.08] rounded-xl overflow-hidden shadow-sm">
+          <div className="p-3.5 border-b border-white/[0.08] flex items-center justify-between bg-black/10">
+            <div className="flex items-center gap-2">
+              <Users className="w-4 h-4 text-emerald-400" />
+              <h2 className="text-sm font-semibold text-white">Performa Kasir</h2>
+            </div>
+            <span className="text-xs text-slate-400 font-mono">Aktivitas Petugas</span>
           </div>
 
-          <div className="divide-y divide-slate-800/60">
+          <div className="divide-y divide-white/[0.04]">
             {!data || data.cashier_performance.length === 0 ? (
-              <div className="p-8 text-center text-slate-500 text-xs">
+              <div className="p-8 text-center text-slate-500 text-xs font-mono">
                 Belum ada aktivitas kasir pada rentang waktu ini.
               </div>
             ) : (
               data.cashier_performance.map((c, index) => (
-                <div key={index} className="p-4 flex items-center justify-between hover:bg-slate-800/30 transition-colors">
+                <div key={index} className="p-3.5 flex items-center justify-between hover:bg-white/[0.02] transition-colors">
                   <div>
-                    <div className="text-xs font-semibold text-white">{c.cashier_name}</div>
-                    <div className="text-[11px] text-slate-400">{c.total_orders} transaksi selesai</div>
+                    <div className="text-xs font-medium text-white">{c.cashier_name}</div>
+                    <div className="text-[11px] text-slate-400 font-mono">{c.total_orders} transaksi selesai</div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-xs font-bold font-mono text-emerald-400">
+                  <div className="text-right font-mono">
+                    <div className="text-xs font-bold text-emerald-400">
                       {formatIDR(c.total_sales)}
                     </div>
                   </div>
