@@ -12,6 +12,7 @@ import {
   CheckCircle2,
   Clock,
   X,
+  AlertCircle
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 
@@ -40,7 +41,6 @@ export const LoginView: React.FC<LoginViewProps> = ({ onForgotPassword }) => {
 
   const { setAuth, sessionExpiredReason, setSessionExpiredReason } = useAuthStore();
 
-  // Cooldown countdown
   useEffect(() => {
     if (resendCooldown <= 0) return;
     const timer = setInterval(() => {
@@ -76,14 +76,12 @@ export const LoginView: React.FC<LoginViewProps> = ({ onForgotPassword }) => {
       if (!res.ok) throw new Error(data.error || 'Login gagal');
 
       if (data.require_2fa) {
-        // Unrecognized device or expired trust — trigger 2FA OTP screen
         setChallengeToken(data.challenge_token);
         setMaskedEmail(data.masked_email || 'email Anda');
         setIs2FA(true);
         setOtpCode('');
         setResendCooldown(60);
       } else {
-        // Recognized trusted device
         setAuth(data.token, data.user, rememberMe);
       }
     } catch (err: any) {
@@ -127,7 +125,6 @@ export const LoginView: React.FC<LoginViewProps> = ({ onForgotPassword }) => {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Verifikasi 2FA gagal');
 
-      // If user checked "Ingat perangkat ini selama 30 hari", store device_token in localStorage
       if (data.device_token) {
         localStorage.setItem('sentosa_device_token', data.device_token);
       }
@@ -164,30 +161,30 @@ export const LoginView: React.FC<LoginViewProps> = ({ onForgotPassword }) => {
   };
 
   return (
-    <div className="min-h-screen bg-[#090d14] flex flex-col justify-center items-center p-4 relative overflow-hidden">
-      {/* Subtle background dot pattern */}
+    <div className="min-h-screen bg-[#080d14] flex flex-col justify-center items-center p-4 relative overflow-hidden select-none">
+      {/* Background Dot Texture */}
       <div className="absolute inset-0 bg-dot-pattern opacity-40 pointer-events-none" />
 
       <div className="relative z-10 w-full max-w-sm">
-        {/* Logo */}
+        {/* Brand Header */}
         <div className="flex flex-col items-center mb-6">
-          <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-3 shadow-sm">
+          <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-3 shadow-md shadow-emerald-950/40">
             <Store className="w-6 h-6" />
           </div>
           <h1 className="text-xl font-bold text-white tracking-tight">Sentosa POS</h1>
-          <p className="text-slate-400 text-xs mt-0.5">Platform Manajemen & Kasir Retail</p>
+          <p className="text-slate-400 text-xs mt-0.5">Platform Manajemen & Kasir Retail SaaS</p>
         </div>
 
-        {/* 2FA SCREEN */}
+        {/* 2FA Challenge Modal Screen */}
         {is2FA ? (
-          <div className="bg-[#0e1520] border border-white/[0.08] rounded-2xl p-6 shadow-xl animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-[#0e1520] border border-white/[0.08] rounded-2xl p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center gap-2.5 mb-3">
               <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
                 <ShieldCheck className="w-4 h-4" />
               </div>
               <div>
-                <h2 className="text-sm font-semibold text-white">Verifikasi Dua Faktor (2FA)</h2>
-                <span className="text-[10px] text-emerald-400 font-mono">Perangkat Baru Terdeteksi</span>
+                <h2 className="text-sm font-bold text-white">Verifikasi Dua Faktor (2FA)</h2>
+                <span className="text-[10px] text-emerald-400 font-mono font-medium">Perangkat Baru Terdeteksi</span>
               </div>
             </div>
 
@@ -196,21 +193,22 @@ export const LoginView: React.FC<LoginViewProps> = ({ onForgotPassword }) => {
             </p>
 
             {error && (
-              <div className="mb-4 p-3 bg-rose-500/10 border border-rose-500/20 rounded-lg text-rose-300 text-xs">
-                {error}
+              <div className="mb-4 p-3 bg-rose-500/10 border border-rose-500/20 rounded-lg text-rose-300 text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
+                <span>{error}</span>
               </div>
             )}
 
             {resendNotice && (
               <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-emerald-300 text-xs flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+                <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
                 <span>{resendNotice}</span>
               </div>
             )}
 
             <form onSubmit={handleVerify2FA} className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1.5" htmlFor="2fa-code-input">
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5" htmlFor="2fa-code-input">
                   Kode Verifikasi 6-Digit
                 </label>
                 <input
@@ -222,12 +220,12 @@ export const LoginView: React.FC<LoginViewProps> = ({ onForgotPassword }) => {
                   value={otpCode}
                   onChange={(e) => setOtpCode(e.target.value.replace(/[^0-9]/g, ''))}
                   placeholder="000000"
-                  className="w-full text-center tracking-[12px] text-2xl font-bold font-mono py-2.5 bg-[#090d14] border border-white/10 focus:border-emerald-500/60 rounded-lg text-white focus:outline-none transition-colors"
+                  className="w-full text-center tracking-[10px] text-2xl font-bold font-mono py-2.5 bg-[#080d15] border border-white/10 focus:border-emerald-500/60 rounded-lg text-white focus:outline-none transition-colors"
                 />
               </div>
 
-              {/* 30-day Trusted Device Checkbox */}
-              <div className="p-3 bg-[#090d14] border border-white/[0.06] rounded-lg flex items-start gap-2.5">
+              {/* 30-day Trusted Device Toggle */}
+              <div className="p-3 bg-[#080d15] border border-white/[0.06] rounded-xl flex items-start gap-2.5">
                 <input
                   id="trust-device-check"
                   type="checkbox"
@@ -238,7 +236,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onForgotPassword }) => {
                 <label htmlFor="trust-device-check" className="text-xs text-slate-300 leading-tight cursor-pointer">
                   <span className="font-semibold text-white block">Ingat perangkat ini (30 Hari)</span>
                   <span className="text-[11px] text-slate-400">
-                    Bebas kode 2FA di perangkat ini hingga maksimal 30 hari.
+                    Bebas kode 2FA di perangkat ini selama 30 hari ke depan.
                   </span>
                 </label>
               </div>
@@ -246,20 +244,20 @@ export const LoginView: React.FC<LoginViewProps> = ({ onForgotPassword }) => {
               <button
                 type="submit"
                 disabled={verifying2FA || otpCode.length !== 6}
-                className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-semibold text-xs rounded-lg flex items-center justify-center gap-2 shadow-sm transition-colors cursor-pointer"
+                className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs rounded-lg flex items-center justify-center gap-2 shadow-md shadow-emerald-950/40 transition-colors cursor-pointer"
               >
                 {verifying2FA ? <span>Memverifikasi Kode...</span> : <span>Verifikasi & Masuk</span>}
               </button>
             </form>
 
-            <div className="mt-4 pt-3 border-t border-white/[0.08] flex items-center justify-between text-xs">
+            <div className="mt-4 pt-3 border-t border-white/[0.07] flex items-center justify-between text-xs">
               <button
                 type="button"
                 onClick={() => {
                   setIs2FA(false);
                   setError(null);
                 }}
-                className="text-slate-400 hover:text-white transition-colors flex items-center gap-1 cursor-pointer"
+                className="text-slate-400 hover:text-white transition-colors flex items-center gap-1 cursor-pointer font-medium"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
                 <span>Ganti Akun</span>
@@ -269,7 +267,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onForgotPassword }) => {
                 type="button"
                 disabled={resendCooldown > 0 || resendingCode}
                 onClick={handleResendCode}
-                className="text-emerald-400 hover:text-emerald-300 disabled:text-slate-500 transition-colors flex items-center gap-1 font-medium cursor-pointer"
+                className="text-emerald-400 hover:text-emerald-300 disabled:text-slate-500 transition-colors flex items-center gap-1 font-semibold cursor-pointer"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${resendingCode ? 'animate-spin' : ''}`} />
                 <span>
@@ -279,16 +277,16 @@ export const LoginView: React.FC<LoginViewProps> = ({ onForgotPassword }) => {
             </div>
           </div>
         ) : (
-          /* STANDARD USERNAME & PASSWORD LOGIN */
-          <div className="bg-[#0e1520] border border-white/[0.08] rounded-2xl p-6 shadow-xl">
-            <h2 className="text-sm font-semibold text-white mb-4">Masuk ke Akun</h2>
+          /* STANDARD LOGIN FORM */
+          <div className="bg-[#0e1520] border border-white/[0.08] rounded-2xl p-6 shadow-2xl">
+            <h2 className="text-sm font-bold text-white mb-4">Masuk ke Akun POS</h2>
 
             {sessionExpiredReason && (
-              <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg text-amber-300 text-xs flex items-start gap-2.5">
-                <Clock className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+              <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-300 text-xs flex items-start gap-2.5">
+                <Clock className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
                 <div className="flex-1 min-w-0">
                   <span className="font-semibold block text-amber-200">Sesi Berakhir</span>
-                  <span className="text-slate-300 leading-relaxed">{sessionExpiredReason}</span>
+                  <span className="text-slate-300 leading-relaxed text-[11px]">{sessionExpiredReason}</span>
                 </div>
                 <button
                   type="button"
@@ -302,15 +300,16 @@ export const LoginView: React.FC<LoginViewProps> = ({ onForgotPassword }) => {
             )}
 
             {error && (
-              <div className="mb-4 p-3 bg-rose-500/10 border border-rose-500/20 rounded-lg text-rose-300 text-xs">
-                {error}
+              <div className="mb-4 p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-300 text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
+                <span>{error}</span>
               </div>
             )}
 
             <form onSubmit={handleLogin} className="space-y-4">
-              {/* Username */}
+              {/* Username Input */}
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1.5" htmlFor="login-username">
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5" htmlFor="login-username">
                   Username
                 </label>
                 <div className="relative">
@@ -325,14 +324,14 @@ export const LoginView: React.FC<LoginViewProps> = ({ onForgotPassword }) => {
                       if (sessionExpiredReason) setSessionExpiredReason(null);
                     }}
                     placeholder="Masukkan username"
-                    className="w-full pl-9 pr-4 py-2 bg-[#090d14] border border-white/10 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/60 transition-colors"
+                    className="w-full pl-10 pr-4 py-2.5 bg-[#080d15] border border-white/10 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/60 transition-colors"
                   />
                 </div>
               </div>
 
-              {/* Password with show/hide */}
+              {/* Password Input */}
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1.5" htmlFor="login-password">
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5" htmlFor="login-password">
                   Password
                 </label>
                 <div className="relative">
@@ -347,7 +346,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onForgotPassword }) => {
                       if (sessionExpiredReason) setSessionExpiredReason(null);
                     }}
                     placeholder="Masukkan password"
-                    className="w-full pl-9 pr-10 py-2 bg-[#090d14] border border-white/10 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/60 transition-colors"
+                    className="w-full pl-10 pr-10 py-2.5 bg-[#080d15] border border-white/10 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/60 transition-colors"
                   />
                   <button
                     type="button"
@@ -367,14 +366,14 @@ export const LoginView: React.FC<LoginViewProps> = ({ onForgotPassword }) => {
                     type="checkbox"
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
-                    className="w-4 h-4 rounded text-emerald-600 bg-[#090d14] border-white/20 focus:ring-emerald-500 cursor-pointer"
+                    className="w-4 h-4 rounded text-emerald-600 bg-[#080d15] border-white/20 focus:ring-emerald-500 cursor-pointer"
                   />
                   <span>Ingat sesi</span>
                 </label>
                 <button
                   type="button"
                   onClick={onForgotPassword}
-                  className="text-xs text-emerald-400 hover:text-emerald-300 transition-colors cursor-pointer"
+                  className="text-xs text-emerald-400 hover:text-emerald-300 transition-colors cursor-pointer font-medium"
                 >
                   Lupa password?
                 </button>
@@ -384,13 +383,13 @@ export const LoginView: React.FC<LoginViewProps> = ({ onForgotPassword }) => {
                 id="login-submit"
                 type="submit"
                 disabled={loading}
-                className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 text-white font-semibold text-xs rounded-lg flex items-center justify-center gap-2 shadow-sm transition-colors cursor-pointer"
+                className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 text-white font-bold text-xs rounded-lg flex items-center justify-center gap-2 shadow-md shadow-emerald-950/40 transition-colors cursor-pointer active:scale-95"
               >
                 {loading ? (
-                  <span>Memverifikasi...</span>
+                  <span>Memverifikasi Akun...</span>
                 ) : (
                   <>
-                    <span>Masuk</span>
+                    <span>Masuk ke Sistem</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </>
                 )}
@@ -400,7 +399,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onForgotPassword }) => {
         )}
 
         <p className="text-center text-xs text-slate-500 mt-6 font-mono">
-          © 2026 Sentosa Retail Group · Terenkripsi
+          © 2026 Sentosa Retail Group · Terenkripsi SHA-256
         </p>
       </div>
     </div>

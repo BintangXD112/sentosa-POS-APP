@@ -16,7 +16,8 @@ import {
   RefreshCw, 
   Wifi, 
   Receipt,
-  RotateCcw
+  RotateCcw,
+  AlertCircle
 } from 'lucide-react';
 import { apiRequest } from '../api/client';
 import { useAuthStore } from '../store/authStore';
@@ -24,7 +25,7 @@ import { useCartStore } from '../store/cartStore';
 import type { Category, Product, SaleDetail } from '../types';
 
 export const PosView: React.FC = () => {
-  const { currentBranch } = useAuthStore();
+  const { currentBranch, user } = useAuthStore();
   const { items, addItem, updateQuantity, removeItem, clearCart, getSubtotal } = useCartStore();
 
   const [products, setProducts] = useState<Product[]>([]);
@@ -51,17 +52,22 @@ export const PosView: React.FC = () => {
 
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // Keyboard shortcut: '/' to focus search
+  // Keyboard shortcut: '/' to focus search, 'Escape' to clear or close modals
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === '/' && document.activeElement !== searchInputRef.current) {
+      if (e.key === '/' && document.activeElement !== searchInputRef.current && !isCheckoutOpen && !completedSale) {
         e.preventDefault();
         searchInputRef.current?.focus();
+      }
+      if (e.key === 'Escape') {
+        if (isCheckoutOpen) setIsCheckoutOpen(false);
+        if (completedSale) setCompletedSale(null);
+        if (isMobileCartOpen) setIsMobileCartOpen(false);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [isCheckoutOpen, completedSale, isMobileCartOpen]);
 
   const loadCategories = async () => {
     try {
@@ -76,7 +82,7 @@ export const PosView: React.FC = () => {
     if (!currentBranch) return;
     setLoading(true);
     try {
-      let url = `/products?limit=100`;
+      let url = `/products?limit=150`;
       if (searchQuery) url += `&q=${encodeURIComponent(searchQuery)}`;
       if (selectedCategory) url += `&category_id=${encodeURIComponent(selectedCategory)}`;
 
@@ -124,7 +130,7 @@ export const PosView: React.FC = () => {
       });
       const sid = res.session_id;
 
-      // Use backend resolved LAN IP or direct pay_url so phones on the same Wi-Fi can open it
+      // Use backend resolved LAN IP or direct pay_url so devices on the same Wi-Fi can open it
       let payUrl = res.pay_url;
       if (!payUrl) {
         if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
@@ -195,7 +201,7 @@ export const PosView: React.FC = () => {
           method: paymentMethod,
           amount_paid: paymentMethod === 'cash' ? cashTendered : subtotal,
         },
-        notes: `Transaksi Kasir Cabang: ${currentBranch.name}`,
+        notes: `Transaksi Kasir - ${currentBranch.name}`,
       };
 
       const res = await apiRequest<any>('/checkout', {
@@ -221,43 +227,43 @@ export const PosView: React.FC = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3.5 sm:py-5 pb-28 lg:pb-8">
-      {/* Top Header & Session Bar */}
-      <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-white/[0.08] pb-3.5">
+    <div className="max-w-[1500px] mx-auto px-3 sm:px-6 py-4 pb-28 lg:pb-8">
+      {/* Top Header Bar */}
+      <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-white/[0.07] pb-3.5">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-            <Receipt className="w-4 h-4" />
+          <div className="w-9 h-9 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
+            <Receipt className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-base sm:text-lg font-bold tracking-tight text-white">Kasir Penjualan</h1>
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                ONLINE
+                TERMINAL AKTIF
               </span>
             </div>
-            <p className="text-xs text-slate-400">Pilih produk atau scan barcode untuk transaksi baru</p>
+            <p className="text-xs text-slate-400">Pilih produk dari katalog atau scan barcode untuk menambahkan pesanan</p>
           </div>
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3 self-end sm:self-auto">
           {currentBranch && (
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border border-white/[0.08] bg-white/[0.03] text-slate-300">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border border-white/[0.08] bg-[#0c121c] text-slate-300">
               <Building2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-              <span className="font-semibold text-white">{currentBranch.name}</span>
+              <span>{currentBranch.name}</span>
             </div>
           )}
-          <span className="hidden md:inline-flex items-center gap-1.5 text-xs text-slate-400 pl-1">
-            Fokus cari <kbd>/</kbd>
+          <span className="hidden md:inline-flex items-center gap-1.5 text-xs text-slate-500 pl-1 font-mono">
+            Pencarian <kbd>/</kbd>
           </span>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-5">
-        {/* Left Column: Product Catalog & Search (8 cols on desktop) */}
+        {/* Left Column: Catalog Search, Filters, and Product Grid (8 cols on desktop) */}
         <div className="lg:col-span-8 space-y-3.5">
-          {/* Filter Bar: Search + Category Pills */}
-          <div className="bg-[#0e1520] border border-white/[0.08] rounded-xl p-3 shadow-sm space-y-2.5">
+          {/* Search & Category Filter Toolbar */}
+          <div className="bg-[#0e1520] border border-white/[0.07] rounded-xl p-3 shadow-sm space-y-2.5">
             <div className="relative">
               <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
@@ -265,15 +271,15 @@ export const PosView: React.FC = () => {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Cari nama produk, SKU, atau scan barcode..."
-                className="w-full pl-10 pr-20 py-2.5 bg-[#090d14] border border-white/[0.08] rounded-lg text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/20 transition-all font-sans"
+                placeholder="Cari nama produk, SKU, barcode..."
+                className="w-full pl-10 pr-20 py-2.5 bg-[#080d15] border border-white/[0.08] rounded-lg text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/20 transition-all font-sans"
               />
               <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
                 {searchQuery ? (
                   <button
                     onClick={() => setSearchQuery('')}
                     className="p-1 rounded text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
-                    title="Hapus pencarian"
+                    title="Hapus filter"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
@@ -286,25 +292,25 @@ export const PosView: React.FC = () => {
             </div>
 
             {/* Category Filter Pills */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 scrollbar-none text-xs">
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 text-xs scrollbar-none">
               <button
                 onClick={() => setSelectedCategory('')}
-                className={`px-3 py-1.5 rounded-md font-medium whitespace-nowrap transition-all cursor-pointer ${
+                className={`px-3 py-1.5 rounded-lg font-medium whitespace-nowrap transition-all cursor-pointer ${
                   selectedCategory === ''
-                    ? 'bg-white/[0.12] text-white border border-white/20 font-semibold shadow-sm'
-                    : 'bg-white/[0.03] text-slate-400 border border-white/[0.05] hover:text-slate-200 hover:bg-white/[0.06]'
+                    ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-semibold'
+                    : 'bg-white/[0.03] text-slate-400 border border-white/[0.06] hover:text-slate-200 hover:bg-white/[0.06]'
                 }`}
               >
-                Semua Produk
+                Semua Produk ({products.length})
               </button>
               {categories.map((c) => (
                 <button
                   key={c.id}
                   onClick={() => setSelectedCategory(c.id)}
-                  className={`px-3 py-1.5 rounded-md font-medium whitespace-nowrap transition-all cursor-pointer ${
+                  className={`px-3 py-1.5 rounded-lg font-medium whitespace-nowrap transition-all cursor-pointer ${
                     selectedCategory === c.id
-                      ? 'bg-white/[0.12] text-white border border-white/20 font-semibold shadow-sm'
-                      : 'bg-white/[0.03] text-slate-400 border border-white/[0.05] hover:text-slate-200 hover:bg-white/[0.06]'
+                      ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-semibold'
+                      : 'bg-white/[0.03] text-slate-400 border border-white/[0.06] hover:text-slate-200 hover:bg-white/[0.06]'
                   }`}
                 >
                   {c.name}
@@ -313,11 +319,11 @@ export const PosView: React.FC = () => {
             </div>
           </div>
 
-          {/* Product Grid */}
+          {/* Product Grid Area */}
           {loading ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-3">
               {[...Array(8)].map((_, idx) => (
-                <div key={idx} className="h-40 bg-[#0e1520]/80 border border-white/[0.05] rounded-xl animate-pulse p-3 flex flex-col justify-between">
+                <div key={idx} className="h-36 bg-[#0e1520]/80 border border-white/[0.05] rounded-xl p-3 flex flex-col justify-between animate-pulse">
                   <div className="space-y-2">
                     <div className="h-3 w-16 bg-white/5 rounded" />
                     <div className="h-4 w-3/4 bg-white/10 rounded" />
@@ -328,18 +334,18 @@ export const PosView: React.FC = () => {
               ))}
             </div>
           ) : products.length === 0 ? (
-            <div className="bg-[#0e1520] border border-white/[0.08] rounded-xl p-10 sm:p-14 text-center text-slate-400">
-              <div className="w-12 h-12 rounded-xl bg-white/[0.03] border border-white/[0.08] flex items-center justify-center mx-auto mb-3 text-slate-500">
-                <ShoppingBag className="w-5 h-5 stroke-[1.5]" />
+            <div className="bg-[#0e1520] border border-white/[0.07] rounded-xl p-12 text-center text-slate-400">
+              <div className="w-12 h-12 rounded-xl bg-white/[0.03] border border-white/[0.07] flex items-center justify-center mx-auto mb-3 text-slate-500">
+                <ShoppingBag className="w-6 h-6 stroke-[1.5]" />
               </div>
-              <p className="text-sm font-semibold text-slate-200">Tidak ada produk yang cocok</p>
-              <p className="text-xs text-slate-500 mt-1">Coba gunakan kata kunci lain atau pilih Semua Produk</p>
+              <p className="text-sm font-semibold text-slate-200">Tidak ada produk ditemukan</p>
+              <p className="text-xs text-slate-500 mt-1">Coba gunakan kata kunci lain atau pilih kategori Semua Produk</p>
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}
-                  className="mt-3.5 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md bg-white/[0.06] hover:bg-white/[0.1] text-slate-200 border border-white/10 transition-colors cursor-pointer"
+                  className="mt-3.5 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-slate-200 border border-white/10 transition-colors cursor-pointer"
                 >
-                  <RotateCcw className="w-3 h-3" />
+                  <RotateCcw className="w-3.5 h-3.5" />
                   <span>Reset Pencarian</span>
                 </button>
               )}
@@ -348,6 +354,7 @@ export const PosView: React.FC = () => {
             <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-3">
               {products.map((p) => {
                 const isOutOfStock = p.stock <= 0;
+                const isLowStock = p.stock > 0 && p.stock <= 5;
                 const cartItem = items.find((i) => i.product.id === p.id);
                 const cartQty = cartItem?.quantity || 0;
 
@@ -359,23 +366,23 @@ export const PosView: React.FC = () => {
                       isOutOfStock
                         ? 'opacity-40 border-white/[0.04] cursor-not-allowed'
                         : cartQty > 0
-                        ? 'border-emerald-500/50 bg-emerald-500/[0.02] shadow-sm hover:border-emerald-400 cursor-pointer active:scale-[0.99]'
-                        : 'border-white/[0.08] hover:border-white/20 hover:bg-[#111927] cursor-pointer active:scale-[0.99]'
+                        ? 'border-emerald-500/50 bg-emerald-500/[0.03] shadow-sm hover:border-emerald-400 cursor-pointer active:scale-[0.99]'
+                        : 'border-white/[0.07] hover:border-white/20 hover:bg-[#121a28] cursor-pointer active:scale-[0.99]'
                     }`}
                   >
                     <div>
-                      {/* Top Bar: SKU & Stock Badge */}
+                      {/* Top Bar: SKU & Stock Tag */}
                       <div className="flex items-center justify-between gap-1 mb-2">
                         <span className="text-[10px] text-slate-500 font-mono tracking-wider truncate">
                           {p.sku}
                         </span>
                         <span
                           className={`text-[10px] font-mono font-medium px-1.5 py-0.5 rounded ${
-                            p.stock > 10
-                              ? 'bg-white/[0.04] text-slate-300 border border-white/[0.06]'
-                              : p.stock > 0
+                            isOutOfStock
+                              ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                              : isLowStock
                               ? 'bg-amber-500/10 text-amber-300 border border-amber-500/20'
-                              : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                              : 'bg-white/[0.04] text-slate-300 border border-white/[0.06]'
                           }`}
                         >
                           {p.stock > 0 ? `${p.stock} ${p.unit_symbol || 'pcs'}` : 'Habis'}
@@ -388,13 +395,13 @@ export const PosView: React.FC = () => {
                       </h3>
 
                       {p.category_name && (
-                        <span className="text-[11px] text-slate-400 mt-1 block truncate font-normal">
+                        <span className="text-[10px] text-slate-400 mt-1 block truncate">
                           {p.category_name}
                         </span>
                       )}
                     </div>
 
-                    {/* Price and Cart Indicator */}
+                    {/* Price and Cart Status */}
                     <div className="mt-3 pt-2.5 border-t border-white/[0.06] flex items-center justify-between">
                       <span className="text-xs sm:text-sm font-bold text-emerald-400 font-mono tracking-tight">
                         {formatIDR(p.selling_price)}
@@ -408,7 +415,7 @@ export const PosView: React.FC = () => {
                         </div>
                       ) : (
                         <div
-                          className={`w-6 h-6 rounded flex items-center justify-center transition-all ${
+                          className={`w-6 h-6 rounded-md flex items-center justify-center transition-all ${
                             isOutOfStock
                               ? 'bg-white/[0.02] text-slate-600'
                               : 'bg-white/[0.04] border border-white/[0.08] text-slate-400 group-hover:bg-emerald-500/20 group-hover:border-emerald-500/40 group-hover:text-emerald-300'
@@ -425,26 +432,26 @@ export const PosView: React.FC = () => {
           )}
         </div>
 
-        {/* Desktop Sticky Cart Panel (Right Column) */}
+        {/* Desktop Sticky Cart Panel (Right Column, 4 cols) */}
         <div className="hidden lg:block lg:col-span-4">
-          <div className="bg-[#0e1520] border border-white/[0.08] rounded-xl shadow-xl flex flex-col h-[calc(100vh-90px)] sticky top-4">
+          <div className="bg-[#0e1520] border border-white/[0.07] rounded-xl shadow-xl flex flex-col h-[calc(100vh-90px)] sticky top-4">
             {/* Cart Header */}
-            <div className="p-3.5 border-b border-white/[0.08] flex items-center justify-between bg-black/10">
+            <div className="p-3.5 border-b border-white/[0.07] flex items-center justify-between bg-black/15">
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                <div className="w-7 h-7 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center">
                   <ShoppingBag className="w-4 h-4" />
                 </div>
                 <div>
                   <h2 className="text-sm font-bold text-white tracking-tight">Pesanan Aktif</h2>
                   <p className="text-[10px] text-slate-400 font-mono">
-                    {items.reduce((acc, i) => acc + i.quantity, 0)} item terpilih
+                    {items.reduce((acc, i) => acc + i.quantity, 0)} item
                   </p>
                 </div>
               </div>
               {items.length > 0 && (
                 <button
                   onClick={clearCart}
-                  className="text-xs text-slate-400 hover:text-rose-400 flex items-center gap-1 transition-colors px-2 py-1 rounded hover:bg-rose-500/10 cursor-pointer"
+                  className="text-xs text-slate-400 hover:text-rose-400 flex items-center gap-1 transition-colors px-2 py-1 rounded-md hover:bg-rose-500/10 cursor-pointer"
                   title="Kosongkan seluruh keranjang"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
@@ -460,16 +467,16 @@ export const PosView: React.FC = () => {
                   <div className="w-12 h-12 rounded-xl bg-white/[0.02] border border-dashed border-white/10 flex items-center justify-center mb-3">
                     <ShoppingBag className="w-6 h-6 text-slate-600 stroke-[1.5]" />
                   </div>
-                  <p className="text-xs font-semibold text-slate-300">Keranjang masih kosong</p>
+                  <p className="text-xs font-semibold text-slate-300">Keranjang Masih Kosong</p>
                   <p className="text-[11px] text-slate-500 mt-1 max-w-[200px] leading-relaxed">
-                    Klik produk di katalog atau scan barcode untuk menambahkan item
+                    Klik produk di katalog atau gunakan tombol tambah untuk memasukkan item
                   </p>
                 </div>
               ) : (
                 items.map((i) => (
                   <div
                     key={i.product.id}
-                    className="bg-[#090d14]/70 hover:bg-[#090d14] border border-white/[0.06] hover:border-white/[0.12] rounded-lg p-2.5 flex flex-col justify-between transition-colors"
+                    className="bg-[#080d15]/80 hover:bg-[#080d15] border border-white/[0.06] hover:border-white/[0.12] rounded-lg p-2.5 flex flex-col justify-between transition-colors"
                   >
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <div className="flex-1 min-w-0">
@@ -488,8 +495,8 @@ export const PosView: React.FC = () => {
                     </div>
 
                     <div className="flex items-center justify-between pt-1">
-                      {/* Qty Controls */}
-                      <div className="flex items-center gap-0.5 bg-black/40 rounded border border-white/10 p-0.5">
+                      {/* Quantity Stepper */}
+                      <div className="flex items-center gap-0.5 bg-black/40 rounded-md border border-white/10 p-0.5">
                         <button
                           onClick={() => updateQuantity(i.product.id, i.quantity - 1)}
                           className="w-6 h-6 rounded flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 active:scale-95 transition-all cursor-pointer"
@@ -518,19 +525,19 @@ export const PosView: React.FC = () => {
               )}
             </div>
 
-            {/* Cart Footer Summary & Pay Button */}
-            <div className="p-3.5 border-t border-white/[0.08] bg-[#0c121c] rounded-b-xl space-y-3">
+            {/* Cart Summary & Pay CTA */}
+            <div className="p-3.5 border-t border-white/[0.07] bg-[#0a0f17] rounded-b-xl space-y-3">
               <div className="space-y-1.5 text-xs">
                 <div className="flex justify-between text-slate-400">
-                  <span>Subtotal Produk</span>
+                  <span>Subtotal Item</span>
                   <span className="font-mono text-slate-200">{formatIDR(subtotal)}</span>
                 </div>
                 <div className="flex justify-between text-slate-500">
                   <span>Pajak & Biaya Layanan</span>
-                  <span className="font-mono text-slate-400">Termasuk</span>
+                  <span className="font-mono text-slate-400">Rp 0 (Termasuk)</span>
                 </div>
-                <div className="flex justify-between items-baseline pt-2 border-t border-white/[0.08]">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-300">Total Tagihan</span>
+                <div className="flex justify-between items-baseline pt-2 border-t border-white/[0.07]">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-300">Total Pembayaran</span>
                   <span className="text-lg font-bold text-white font-mono tracking-tight">{formatIDR(subtotal)}</span>
                 </div>
               </div>
@@ -542,7 +549,7 @@ export const PosView: React.FC = () => {
               >
                 <span className="flex items-center gap-2">
                   <CreditCard className="w-4 h-4" />
-                  <span>Proses Pembayaran</span>
+                  <span>Bayar Sekarang</span>
                 </span>
                 <span className="font-mono text-xs sm:text-sm font-black bg-emerald-700/60 px-2 py-0.5 rounded border border-emerald-400/20">
                   {formatIDR(subtotal)}
@@ -553,7 +560,7 @@ export const PosView: React.FC = () => {
         </div>
       </div>
 
-      {/* Floating Bottom Cart Bar for Mobile & Tablet (when items > 0) */}
+      {/* Mobile Sticky Bottom Floating Cart Bar */}
       {items.length > 0 && (
         <div className="lg:hidden fixed bottom-3 left-3 right-3 z-30 animate-in slide-in-from-bottom-4 duration-200">
           <div className="bg-[#0e1520]/95 backdrop-blur-md border border-white/15 rounded-xl p-2.5 sm:p-3 shadow-2xl flex items-center justify-between gap-3">
@@ -561,7 +568,7 @@ export const PosView: React.FC = () => {
               onClick={() => setIsMobileCartOpen(true)}
               className="flex items-center gap-2.5 text-left flex-1 min-w-0 cursor-pointer"
             >
-              <div className="w-9 h-9 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 flex-shrink-0 relative">
+              <div className="w-9 h-9 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0 relative">
                 <ShoppingBag className="w-4 h-4" />
                 <span className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 text-slate-950 font-bold text-[10px] rounded-full flex items-center justify-center shadow">
                   {items.reduce((acc, i) => acc + i.quantity, 0)}
@@ -572,7 +579,7 @@ export const PosView: React.FC = () => {
                 <div className="text-sm font-black text-emerald-400 font-mono truncate leading-snug">{formatIDR(subtotal)}</div>
               </div>
             </button>
-            <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="flex items-center gap-2 shrink-0">
               <button
                 onClick={() => setIsMobileCartOpen(true)}
                 className="px-3 py-2 bg-white/[0.06] hover:bg-white/[0.1] text-slate-200 text-xs font-semibold rounded-lg border border-white/10 transition-colors cursor-pointer"
@@ -591,25 +598,25 @@ export const PosView: React.FC = () => {
         </div>
       )}
 
-      {/* Mobile Cart Slide-Up Drawer */}
+      {/* Mobile Cart Drawer */}
       {isMobileCartOpen && (
         <div
           className="lg:hidden fixed inset-0 z-50 flex flex-col justify-end bg-black/80 backdrop-blur-sm animate-in fade-in duration-200"
           onClick={() => setIsMobileCartOpen(false)}
         >
           <div
-            className="bg-[#0e1520] border-t border-white/10 rounded-t-2xl max-h-[85vh] flex flex-col shadow-2xl animate-in slide-in-from-bottom duration-300"
+            className="bg-[#0e1520] border-t border-white/10 rounded-t-2xl max-h-[85vh] flex flex-col shadow-2xl animate-in slide-in-from-bottom duration-250"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Drawer Header */}
-            <div className="p-3.5 border-b border-white/[0.08] flex items-center justify-between">
+            <div className="p-3.5 border-b border-white/[0.07] flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-md bg-emerald-500/15 text-emerald-400 flex items-center justify-center">
+                <div className="w-7 h-7 rounded-lg bg-emerald-500/15 text-emerald-400 flex items-center justify-center">
                   <ShoppingBag className="w-4 h-4" />
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-white">Keranjang Pesanan</h3>
-                  <p className="text-[10px] text-slate-400 font-mono">{items.reduce((acc, i) => acc + i.quantity, 0)} item dipilih</p>
+                  <p className="text-[10px] text-slate-400 font-mono">{items.reduce((acc, i) => acc + i.quantity, 0)} item</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -623,7 +630,7 @@ export const PosView: React.FC = () => {
                 )}
                 <button
                   onClick={() => setIsMobileCartOpen(false)}
-                  className="p-1.5 rounded text-slate-400 hover:text-white cursor-pointer"
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-white cursor-pointer"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -632,47 +639,41 @@ export const PosView: React.FC = () => {
 
             {/* Drawer Items */}
             <div className="p-3 space-y-2 overflow-y-auto flex-1 max-h-[50vh]">
-              {items.length === 0 ? (
-                <div className="text-center py-8 text-slate-500 text-xs">
-                  Keranjang kosong
-                </div>
-              ) : (
-                items.map((i) => (
-                  <div
-                    key={i.product.id}
-                    className="bg-[#090d14] border border-white/[0.06] rounded-lg p-2.5 flex items-center justify-between gap-3"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <div className="text-xs font-semibold text-white truncate">{i.product.name}</div>
-                      <div className="text-[11px] text-emerald-400 font-mono mt-0.5">
-                        {formatIDR(i.product.selling_price * i.quantity)}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-0.5 bg-black/40 rounded border border-white/10 p-0.5">
-                      <button
-                        onClick={() => updateQuantity(i.product.id, i.quantity - 1)}
-                        className="w-7 h-7 rounded flex items-center justify-center text-slate-300 hover:bg-white/10 active:scale-95 cursor-pointer"
-                      >
-                        <Minus className="w-3.5 h-3.5" />
-                      </button>
-                      <span className="w-7 text-center text-xs font-bold text-white font-mono">
-                        {i.quantity}
-                      </span>
-                      <button
-                        onClick={() => updateQuantity(i.product.id, i.quantity + 1)}
-                        disabled={i.quantity >= i.product.stock}
-                        className="w-7 h-7 rounded flex items-center justify-center text-slate-300 hover:bg-white/10 disabled:opacity-30 active:scale-95 cursor-pointer"
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                      </button>
+              {items.map((i) => (
+                <div
+                  key={i.product.id}
+                  className="bg-[#080d15] border border-white/[0.06] rounded-lg p-2.5 flex items-center justify-between gap-3"
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs font-semibold text-white truncate">{i.product.name}</div>
+                    <div className="text-[11px] text-emerald-400 font-mono mt-0.5">
+                      {formatIDR(i.product.selling_price * i.quantity)}
                     </div>
                   </div>
-                ))
-              )}
+                  <div className="flex items-center gap-0.5 bg-black/40 rounded-md border border-white/10 p-0.5">
+                    <button
+                      onClick={() => updateQuantity(i.product.id, i.quantity - 1)}
+                      className="w-7 h-7 rounded flex items-center justify-center text-slate-300 hover:bg-white/10 active:scale-95 cursor-pointer"
+                    >
+                      <Minus className="w-3.5 h-3.5" />
+                    </button>
+                    <span className="w-7 text-center text-xs font-bold text-white font-mono">
+                      {i.quantity}
+                    </span>
+                    <button
+                      onClick={() => updateQuantity(i.product.id, i.quantity + 1)}
+                      disabled={i.quantity >= i.product.stock}
+                      className="w-7 h-7 rounded flex items-center justify-center text-slate-300 hover:bg-white/10 disabled:opacity-30 active:scale-95 cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
 
             {/* Drawer Footer */}
-            <div className="p-3.5 border-t border-white/[0.08] bg-[#0c121c] space-y-3">
+            <div className="p-3.5 border-t border-white/[0.07] bg-[#0a0f17] space-y-3">
               <div className="flex justify-between items-baseline text-sm font-bold text-white">
                 <span className="text-slate-400 text-xs uppercase tracking-wider font-semibold">Total Tagihan</span>
                 <span className="text-lg text-emerald-400 font-mono">{formatIDR(subtotal)}</span>
@@ -693,15 +694,15 @@ export const PosView: React.FC = () => {
         </div>
       )}
 
-      {/* Checkout Dialog Modal */}
+      {/* Checkout Modal Dialog */}
       {isCheckoutOpen && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
-          <div className="bg-[#0e1520] border border-white/10 rounded-2xl w-full max-w-lg max-h-[92vh] flex flex-col overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+          <div className="bg-[#0e1520] border border-white/10 rounded-2xl w-full max-w-lg max-h-[92vh] flex flex-col overflow-hidden shadow-2xl animate-in zoom-in-95 duration-150">
             {/* Modal Header */}
-            <div className="p-4 sm:p-5 border-b border-white/[0.08] flex items-center justify-between flex-shrink-0 bg-black/20">
+            <div className="p-4 sm:p-5 border-b border-white/[0.07] flex items-center justify-between shrink-0 bg-black/20">
               <div>
-                <h3 className="text-base font-bold text-white tracking-tight">Pembayaran Kasir</h3>
-                <p className="text-xs text-slate-400">Pilih metode pembayaran dan selesaikan transaksi</p>
+                <h3 className="text-base font-bold text-white tracking-tight">Penyelesaian Transaksi</h3>
+                <p className="text-xs text-slate-400">Pilih metode pembayaran pelanggan dan konfirmasi tagihan</p>
               </div>
               <button
                 onClick={() => setIsCheckoutOpen(false)}
@@ -713,14 +714,15 @@ export const PosView: React.FC = () => {
 
             <div className="p-4 sm:p-6 space-y-4 sm:space-y-5 overflow-y-auto flex-1">
               {checkoutError && (
-                <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-lg text-rose-300 text-xs">
-                  {checkoutError}
+                <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-lg text-rose-300 text-xs flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
+                  <span>{checkoutError}</span>
                 </div>
               )}
 
-              {/* Total Display */}
-              <div className="bg-[#090d14] border border-white/10 rounded-xl p-4 text-center">
-                <div className="text-[11px] text-slate-400 uppercase tracking-wider font-semibold font-mono">Total Tagihan Transaksi</div>
+              {/* Total Summary Display */}
+              <div className="bg-[#080d15] border border-white/10 rounded-xl p-4 text-center">
+                <div className="text-[11px] text-slate-400 uppercase tracking-wider font-semibold font-mono">Total Tagihan Kasir</div>
                 <div className="text-2xl sm:text-3xl font-black text-white font-mono mt-1 tracking-tight">
                   {formatIDR(subtotal)}
                 </div>
@@ -738,8 +740,8 @@ export const PosView: React.FC = () => {
                     }}
                     className={`p-3 rounded-lg border flex flex-col items-center gap-1.5 text-xs transition-all cursor-pointer ${
                       paymentMethod === 'cash'
-                        ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-300 font-bold shadow-sm'
-                        : 'bg-white/[0.03] border-white/[0.08] text-slate-400 hover:bg-white/[0.06] hover:text-slate-200'
+                        ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300 font-bold shadow-sm'
+                        : 'bg-white/[0.03] border-white/[0.07] text-slate-400 hover:bg-white/[0.06] hover:text-slate-200'
                     }`}
                   >
                     <Banknote className="w-5 h-5" />
@@ -751,8 +753,8 @@ export const PosView: React.FC = () => {
                     onClick={() => handleSelectPaymentMethod('qris')}
                     className={`p-3 rounded-lg border flex flex-col items-center gap-1.5 text-xs transition-all cursor-pointer ${
                       paymentMethod === 'qris'
-                        ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-300 font-bold shadow-sm'
-                        : 'bg-white/[0.03] border-white/[0.08] text-slate-400 hover:bg-white/[0.06] hover:text-slate-200'
+                        ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300 font-bold shadow-sm'
+                        : 'bg-white/[0.03] border-white/[0.07] text-slate-400 hover:bg-white/[0.06] hover:text-slate-200'
                     }`}
                   >
                     <QrCode className="w-5 h-5" />
@@ -764,8 +766,8 @@ export const PosView: React.FC = () => {
                     onClick={() => handleSelectPaymentMethod('transfer')}
                     className={`p-3 rounded-lg border flex flex-col items-center gap-1.5 text-xs transition-all cursor-pointer ${
                       paymentMethod === 'transfer'
-                        ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-300 font-bold shadow-sm'
-                        : 'bg-white/[0.03] border-white/[0.08] text-slate-400 hover:bg-white/[0.06] hover:text-slate-200'
+                        ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300 font-bold shadow-sm'
+                        : 'bg-white/[0.03] border-white/[0.07] text-slate-400 hover:bg-white/[0.06] hover:text-slate-200'
                     }`}
                   >
                     <Building2 className="w-5 h-5" />
@@ -777,8 +779,8 @@ export const PosView: React.FC = () => {
                     onClick={() => handleSelectPaymentMethod('debit')}
                     className={`p-3 rounded-lg border flex flex-col items-center gap-1.5 text-xs transition-all cursor-pointer ${
                       paymentMethod === 'debit'
-                        ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-300 font-bold shadow-sm'
-                        : 'bg-white/[0.03] border-white/[0.08] text-slate-400 hover:bg-white/[0.06] hover:text-slate-200'
+                        ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300 font-bold shadow-sm'
+                        : 'bg-white/[0.03] border-white/[0.07] text-slate-400 hover:bg-white/[0.06] hover:text-slate-200'
                     }`}
                   >
                     <CreditCard className="w-5 h-5" />
@@ -787,12 +789,12 @@ export const PosView: React.FC = () => {
                 </div>
               </div>
 
-              {/* Cash Panel */}
+              {/* Cash Payment View */}
               {paymentMethod === 'cash' && (
                 <div className="space-y-3">
                   <div>
                     <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                      Jumlah Uang Diterima (Rp)
+                      Jumlah Uang Tunai Diterima (Rp)
                     </label>
                     <div className="relative">
                       <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-mono font-bold text-sm">
@@ -802,20 +804,20 @@ export const PosView: React.FC = () => {
                         type="number"
                         value={cashTendered || ''}
                         onChange={(e) => setCashTendered(Number(e.target.value))}
-                        className="w-full pl-11 pr-4 py-2.5 bg-[#090d14] border border-white/15 rounded-lg text-lg font-mono font-bold text-white focus:outline-none focus:border-emerald-500/60"
+                        className="w-full pl-11 pr-4 py-2.5 bg-[#080d15] border border-white/15 rounded-lg text-lg font-mono font-bold text-white focus:outline-none focus:border-emerald-500/60"
                         placeholder="0"
                       />
                     </div>
                   </div>
 
-                  {/* Fast Presets */}
+                  {/* Fast Amount Presets */}
                   <div className="flex flex-wrap gap-1.5">
                     <button
                       type="button"
                       onClick={() => setCashTendered(subtotal)}
-                      className={`px-2.5 py-1.5 border rounded text-xs font-medium transition-colors cursor-pointer ${
+                      className={`px-2.5 py-1.5 border rounded-lg text-xs font-medium transition-colors cursor-pointer ${
                         cashTendered === subtotal
-                          ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300'
+                          ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300 font-semibold'
                           : 'bg-white/[0.04] border-white/10 hover:bg-white/[0.08] text-slate-300'
                       }`}
                     >
@@ -826,9 +828,9 @@ export const PosView: React.FC = () => {
                         key={preset}
                         type="button"
                         onClick={() => setCashTendered(preset)}
-                        className={`px-2.5 py-1.5 border rounded text-xs font-medium font-mono transition-colors cursor-pointer ${
+                        className={`px-2.5 py-1.5 border rounded-lg text-xs font-medium font-mono transition-colors cursor-pointer ${
                           cashTendered === preset
-                            ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300'
+                            ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300 font-semibold'
                             : 'bg-white/[0.04] border-white/10 hover:bg-white/[0.08] text-slate-300'
                         }`}
                       >
@@ -837,8 +839,8 @@ export const PosView: React.FC = () => {
                     ))}
                   </div>
 
-                  {/* Kembalian Calculation */}
-                  <div className="bg-[#090d14] border border-white/[0.08] rounded-lg p-3 flex justify-between items-center text-sm">
+                  {/* Change Due Calculation */}
+                  <div className="bg-[#080d15] border border-white/[0.08] rounded-lg p-3 flex justify-between items-center text-sm">
                     <span className="text-slate-400 font-medium text-xs">Kembalian:</span>
                     <span
                       className={`font-mono font-bold text-base ${
@@ -853,12 +855,12 @@ export const PosView: React.FC = () => {
                 </div>
               )}
 
-              {/* QRIS Panel */}
+              {/* QRIS Workflow */}
               {paymentMethod === 'qris' && (
                 <div className="space-y-3">
                   {qrisStatus === 'pending' && qrisPayUrl && (
                     <div className="flex flex-col items-center gap-3">
-                      {/* QR Code Container */}
+                      {/* High Contrast QR Code Card */}
                       <div className="bg-white p-4 rounded-xl shadow-lg border-2 border-emerald-500/40">
                         <QRCodeSVG
                           value={qrisPayUrl}
@@ -868,26 +870,25 @@ export const PosView: React.FC = () => {
                         />
                       </div>
 
-                      {/* Instruction */}
+                      {/* Realtime Status Feedback */}
                       <div className="text-center space-y-1">
                         <div className="flex items-center justify-center gap-1.5 text-xs text-slate-300">
                           <Wifi className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
                           <span>Menunggu konfirmasi pembayaran pelanggan...</span>
                         </div>
                         <p className="text-[11px] text-slate-400">
-                          Pelanggan dapat scan QR di atas dengan kamera HP / aplikasi QRIS.
+                          Pelanggan dapat melakukan scan QR di atas dengan aplikasi BCA Mobile, GoPay, OVO, ShopeePay, atau m-Banking lainnya.
                         </p>
                       </div>
 
-                      {/* URL hint */}
-                      <div className="w-full bg-[#090d14] border border-white/[0.08] rounded-lg p-2.5 text-center space-y-1">
+                      {/* Direct URL / Wi-Fi indicator */}
+                      <div className="w-full bg-[#080d15] border border-white/[0.08] rounded-lg p-2.5 text-center space-y-1">
                         <p className="text-[10px] text-slate-400 font-mono break-all">{qrisPayUrl}</p>
                         <p className="text-[10px] text-amber-400/90 font-medium">
-                          * Pastikan HP pelanggan dan kasir berada dalam satu jaringan Wi-Fi
+                          * Pastikan perangkat pelanggan terhubung ke jaringan internet yang sama
                         </p>
                       </div>
 
-                      {/* Refresh button */}
                       <button
                         type="button"
                         onClick={() => { setQrisStatus('idle'); startQrisSession(subtotal); }}
@@ -904,8 +905,8 @@ export const PosView: React.FC = () => {
                         <CheckCircle2 className="w-7 h-7 text-emerald-400" />
                       </div>
                       <div className="text-center">
-                        <div className="text-sm font-bold text-emerald-400">Pembayaran QRIS Berhasil!</div>
-                        <div className="text-xs text-slate-400 mt-0.5">Transaksi telah diverifikasi dari server</div>
+                        <div className="text-sm font-bold text-emerald-400">Pembayaran QRIS Berhasil Diverifikasi!</div>
+                        <div className="text-xs text-slate-400 mt-0.5">Sistem telah menerima konfirmasi pembayaran secara otomatis</div>
                       </div>
                       <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-5 py-2 text-emerald-300 font-mono font-bold text-base">
                         {formatIDR(subtotal)}
@@ -916,7 +917,7 @@ export const PosView: React.FC = () => {
                   {qrisStatus === 'idle' && (
                     <div className="flex items-center justify-center gap-2 py-8 text-slate-400 text-xs">
                       <RefreshCw className="w-4 h-4 animate-spin text-emerald-400" />
-                      <span>Menyiapkan sesi QRIS...</span>
+                      <span>Menyiapkan sesi pembayaran QRIS...</span>
                     </div>
                   )}
                 </div>
@@ -924,7 +925,7 @@ export const PosView: React.FC = () => {
             </div>
 
             {/* Modal Actions */}
-            <div className="p-4 border-t border-white/[0.08] bg-black/20 flex items-center justify-end gap-2.5">
+            <div className="p-4 border-t border-white/[0.07] bg-black/20 flex items-center justify-end gap-2.5">
               <button
                 type="button"
                 onClick={() => setIsCheckoutOpen(false)}
@@ -945,12 +946,12 @@ export const PosView: React.FC = () => {
                 {checkoutLoading ? (
                   <>
                     <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                    <span>Memproses Transaksi...</span>
+                    <span>Menyimpan Transaksi...</span>
                   </>
                 ) : (
                   <>
                     <CheckCircle2 className="w-4 h-4" />
-                    <span>Konfirmasi & Cetak Struk</span>
+                    <span>Selesaikan & Cetak Struk</span>
                   </>
                 )}
               </button>
@@ -962,30 +963,30 @@ export const PosView: React.FC = () => {
       {/* Printable Receipt Modal */}
       {completedSale && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
-          <div className="bg-[#0e1520] border border-white/10 rounded-2xl w-full max-w-sm max-h-[92vh] flex flex-col overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="p-3.5 border-b border-white/[0.08] flex items-center justify-between flex-shrink-0 bg-black/20">
+          <div className="bg-[#0e1520] border border-white/10 rounded-2xl w-full max-w-sm max-h-[92vh] flex flex-col overflow-hidden shadow-2xl animate-in zoom-in-95 duration-150">
+            <div className="p-3.5 border-b border-white/[0.07] flex items-center justify-between shrink-0 bg-black/20">
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                 <span className="font-bold text-white text-sm">Transaksi Berhasil</span>
               </div>
               <button
                 onClick={() => setCompletedSale(null)}
-                className="text-slate-400 hover:text-white p-1 rounded cursor-pointer"
+                className="text-slate-400 hover:text-white p-1 rounded-md cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Thermal Struk Preview Box */}
-            <div className="p-4 sm:p-6 bg-[#090d14] flex justify-center overflow-y-auto flex-1">
+            {/* Thermal Receipt Preview */}
+            <div className="p-4 sm:p-5 bg-[#080d15] flex justify-center overflow-y-auto flex-1">
               <div
                 id="printable-receipt"
-                className="bg-white text-slate-950 font-mono text-[11px] p-5 w-72 rounded shadow-md border border-slate-200"
+                className="bg-white text-slate-950 font-mono text-[11px] p-5 w-72 rounded-lg shadow-md border border-slate-200"
               >
                 <div className="text-center pb-3 border-b border-dashed border-slate-400">
-                  <div className="font-bold text-sm tracking-wide">SENTOSA RETAIL GROUP</div>
+                  <div className="font-bold text-sm tracking-wide">{user?.business_name || 'SENTOSA RETAIL GROUP'}</div>
                   <div className="text-[10px] text-slate-700">{completedSale.branch_name}</div>
-                  <div className="text-[10px] text-slate-600 mt-1">Struk Resmi Penjualan</div>
+                  <div className="text-[10px] text-slate-600 mt-0.5">Struk Resmi Pembelian</div>
                 </div>
 
                 <div className="py-2 border-b border-dashed border-slate-400 space-y-1 text-[10px]">
@@ -994,7 +995,7 @@ export const PosView: React.FC = () => {
                     <span className="font-bold">{completedSale.receipt_number}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Tanggal:</span>
+                    <span>Waktu:</span>
                     <span>{new Date(completedSale.created_at).toLocaleString('id-ID')}</span>
                   </div>
                   <div className="flex justify-between">
@@ -1004,7 +1005,7 @@ export const PosView: React.FC = () => {
                 </div>
 
                 {/* Items */}
-                <div className="py-2 border-b border-dashed border-slate-400 space-y-2">
+                <div className="py-2 border-b border-dashed border-slate-400 space-y-1.5">
                   {completedSale.lines.map((line, idx) => (
                     <div key={idx}>
                       <div className="font-semibold text-slate-900">{line.product_name}</div>
@@ -1038,14 +1039,14 @@ export const PosView: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="text-center pt-3 text-[10px] text-slate-600">
+                <div className="text-center pt-3 text-[10px] text-slate-600 leading-relaxed">
                   Terima kasih atas kunjungan Anda!<br />
-                  Barang yang sudah dibeli tidak dapat ditukar.
+                  Barang yang sudah dibeli tidak dapat ditukar atau dikembalikan.
                 </div>
               </div>
             </div>
 
-            <div className="p-3.5 border-t border-white/[0.08] bg-[#0e1520] flex gap-2">
+            <div className="p-3.5 border-t border-white/[0.07] bg-[#0e1520] flex gap-2">
               <button
                 type="button"
                 onClick={() => window.print()}

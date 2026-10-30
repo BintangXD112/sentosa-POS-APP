@@ -16,6 +16,7 @@ import {
   ArrowDownLeft,
   ChevronLeft,
   ChevronRight,
+  AlertCircle
 } from 'lucide-react';
 import { apiRequest } from '../api/client';
 import { useAuthStore } from '../store/authStore';
@@ -89,7 +90,6 @@ export const SuppliersView: React.FC = () => {
     setLoading(true);
     try {
       const res = await apiRequest<{ movements: InventoryMovement[] }>('/inventory/movements?limit=100');
-      // Filter receiving (pasokan masuk)
       const receiving = (res.movements || []).filter((m) => m.movement_type === 'receiving');
       setReceivingMovements(receiving);
     } catch (err) {
@@ -300,7 +300,7 @@ export const SuppliersView: React.FC = () => {
       setTimeout(() => {
         setRestockModalOpen(false);
         setRestockSuccessMsg(null);
-      }, 1500);
+      }, 1200);
     } catch (err: any) {
       setRestockError(err.message || 'Gagal memproses pasokan stok');
     } finally {
@@ -331,16 +331,24 @@ export const SuppliersView: React.FC = () => {
   }, [page, totalPages]);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+    <div className="max-w-[1500px] mx-auto px-4 sm:px-6 py-5 space-y-5">
       {/* View Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/[0.07] pb-4">
         <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-emerald-400">Rantai Pasokan</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            {currentBranch && (
+              <span className="text-xs text-slate-400">
+                • Cabang <strong className="text-white font-medium">{currentBranch.name}</strong>
+              </span>
+            )}
+          </div>
           <h1 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
-            <Truck className="w-5 h-5 text-emerald-400" />
-            <span>Manajemen Supplier & Pasokan Stok</span>
+            <span>Supplier & Pasokan Inbound</span>
           </h1>
           <p className="text-xs text-slate-400 mt-0.5">
-            Kelola mitra vendor dan lakukan penambahan stok masuk ke {currentBranch?.name}
+            Kelola mitra vendor, pencatatan surat jalan/faktur, dan penerimaan pasokan barang masuk
           </p>
         </div>
 
@@ -350,7 +358,7 @@ export const SuppliersView: React.FC = () => {
             <>
               <button
                 onClick={() => handleOpenRestock()}
-                className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-sm cursor-pointer transition-colors"
+                className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md shadow-emerald-950/40 cursor-pointer transition-colors active:scale-95"
               >
                 <PackagePlus className="w-4 h-4" />
                 <span>+ Pasok Stok (Inbound)</span>
@@ -358,7 +366,7 @@ export const SuppliersView: React.FC = () => {
 
               <button
                 onClick={handleOpenAddSupplier}
-                className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-slate-200 text-xs font-medium transition-colors cursor-pointer"
+                className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-[#0e1520] hover:bg-white/[0.06] border border-white/10 text-slate-200 text-xs font-semibold transition-colors cursor-pointer"
               >
                 <Plus className="w-4 h-4 text-emerald-400" />
                 <span>Tambah Supplier</span>
@@ -368,39 +376,39 @@ export const SuppliersView: React.FC = () => {
         </div>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-[#0e1520] border border-white/[0.08] rounded-xl p-4 flex items-center justify-between shadow-sm">
+      {/* KPI Cards Row */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+        <div className="bg-[#0e1520] border border-white/[0.07] rounded-xl p-4 sm:p-5 flex items-center justify-between hover:border-white/[0.12] transition-colors">
           <div>
-            <div className="text-xs text-slate-400 font-medium">Total Mitra Supplier</div>
+            <div className="text-xs text-slate-400 font-medium">Mitra Supplier Terdaftar</div>
             <div className="text-2xl font-bold font-mono text-white mt-1">{suppliers.length}</div>
-            <div className="text-[11px] text-slate-500 mt-0.5">Vendor terdaftar</div>
+            <div className="text-[11px] text-slate-500 mt-0.5">Vendor rekanan aktif</div>
           </div>
-          <div className="p-2.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-lg">
+          <div className="w-9 h-9 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center">
             <Truck className="w-4 h-4" />
           </div>
         </div>
 
-        <div className="bg-[#0e1520] border border-white/[0.08] rounded-xl p-4 flex items-center justify-between shadow-sm">
+        <div className="bg-[#0e1520] border border-white/[0.07] rounded-xl p-4 sm:p-5 flex items-center justify-between hover:border-white/[0.12] transition-colors">
           <div>
-            <div className="text-xs text-slate-400 font-medium">Katalog Produk</div>
+            <div className="text-xs text-slate-400 font-medium">Katalog Produk Cabang</div>
             <div className="text-2xl font-bold font-mono text-white mt-1">{products.length}</div>
-            <div className="text-[11px] text-slate-500 mt-0.5">Siap dipasok stok</div>
+            <div className="text-[11px] text-slate-500 mt-0.5">Barang siap menerima stok</div>
           </div>
-          <div className="p-2.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-lg">
+          <div className="w-9 h-9 rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/20 flex items-center justify-center">
             <Boxes className="w-4 h-4" />
           </div>
         </div>
 
-        <div className="bg-[#0e1520] border border-white/[0.08] rounded-xl p-4 flex items-center justify-between shadow-sm">
+        <div className="bg-[#0e1520] border border-white/[0.07] rounded-xl p-4 sm:p-5 flex items-center justify-between hover:border-white/[0.12] transition-colors">
           <div>
-            <div className="text-xs text-slate-400 font-medium">Cabang Tujuan Aktif</div>
-            <div className="text-base font-bold text-emerald-400 mt-1 truncate">
+            <div className="text-xs text-slate-400 font-medium">Cabang Penerima Aktif</div>
+            <div className="text-lg font-bold text-emerald-400 mt-1 truncate">
               {currentBranch?.name || 'Semua Cabang'}
             </div>
-            <div className="text-[11px] text-slate-500 mt-0.5">Lokasi penerimaan stok</div>
+            <div className="text-[11px] text-slate-500 mt-0.5">Tujuan alokasi inventaris</div>
           </div>
-          <div className="p-2.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-lg">
+          <div className="w-9 h-9 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center justify-center">
             <Building2 className="w-4 h-4" />
           </div>
         </div>
@@ -408,63 +416,71 @@ export const SuppliersView: React.FC = () => {
 
       {/* Tabs Switcher & Search Bar */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-1 bg-[#0e1520] border border-white/[0.08] p-1 rounded-lg">
+        <div className="flex items-center gap-1 bg-[#0b1019] border border-white/[0.08] p-1 rounded-lg">
           <button
             onClick={() => setActiveTab('suppliers')}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer ${
               activeTab === 'suppliers'
-                ? 'bg-emerald-600 text-white shadow-sm'
+                ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 shadow-sm'
                 : 'text-slate-400 hover:text-white'
             }`}
           >
-            <Truck className="w-4 h-4" />
-            <span>Daftar Supplier ({suppliers.length})</span>
+            <Truck className="w-3.5 h-3.5" />
+            <span>Direktori Supplier ({suppliers.length})</span>
           </button>
           <button
             onClick={() => setActiveTab('history')}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer ${
               activeTab === 'history'
-                ? 'bg-emerald-600 text-white shadow-sm'
+                ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 shadow-sm'
                 : 'text-slate-400 hover:text-white'
             }`}
           >
-            <History className="w-4 h-4" />
+            <History className="w-3.5 h-3.5" />
             <span>Riwayat Pasokan Masuk</span>
           </button>
         </div>
 
         {activeTab === 'suppliers' && (
-          <div className="relative w-full sm:w-72">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <div className="relative w-full sm:w-80">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Cari supplier / telepon..."
-              className="w-full pl-9 pr-4 py-2 bg-[#090d14] border border-white/10 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/60"
+              placeholder="Cari nama supplier, PIC, telepon..."
+              className="w-full pl-10 pr-4 py-2 bg-[#080d15] border border-white/10 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/60 font-sans"
             />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
         )}
       </div>
 
-      {/* Tab 1: Supplier Grid Cards */}
+      {/* Tab 1: Supplier Directory Cards */}
       {activeTab === 'suppliers' && (
         <div>
           {loading ? (
-            <div className="py-12 text-center text-xs text-slate-500 font-mono">Memuat daftar supplier...</div>
+            <div className="py-12 text-center text-xs text-slate-500 font-mono">Memuat data mitra supplier...</div>
           ) : filteredSuppliers.length === 0 ? (
-            <div className="bg-[#0e1520] border border-white/[0.08] rounded-xl p-10 text-center space-y-3">
-              <div className="w-10 h-10 rounded-lg bg-white/[0.04] border border-white/10 flex items-center justify-center mx-auto text-slate-400">
-                <Truck className="w-5 h-5" />
+            <div className="bg-[#0e1520] border border-white/[0.07] rounded-xl p-12 text-center space-y-3">
+              <div className="w-12 h-12 rounded-xl bg-white/[0.03] border border-white/10 flex items-center justify-center mx-auto text-slate-400">
+                <Truck className="w-6 h-6 stroke-[1.5]" />
               </div>
-              <div className="text-sm font-semibold text-white">Belum Ada Data Supplier</div>
+              <div className="text-sm font-bold text-white">Belum Ada Data Mitra Supplier</div>
               <p className="text-xs text-slate-400 max-w-sm mx-auto">
-                Tambahkan vendor atau distributor untuk mempermudah pencatatan pasokan stok barang.
+                Daftarkan vendor atau distributor untuk mempermudah pencatatan pasokan stok barang secara rapi dan akuntabel.
               </p>
               {canManageSuppliers && (
                 <button
                   onClick={handleOpenAddSupplier}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-lg shadow-sm cursor-pointer transition-colors inline-flex items-center gap-1.5"
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg shadow-sm cursor-pointer transition-colors inline-flex items-center gap-1.5"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Tambah Supplier Pertama</span>
@@ -473,129 +489,135 @@ export const SuppliersView: React.FC = () => {
             </div>
           ) : (
             <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {paginatedSuppliers.map((s) => (
-                <div
-                  key={s.id}
-                  className="bg-[#0e1520] border border-white/[0.08] hover:border-white/20 rounded-xl p-4 flex flex-col justify-between shadow-sm transition-all"
-                >
-                  <div>
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0 flex-1">
-                        <h3 className="text-sm font-semibold text-white truncate">{s.name}</h3>
-                        {s.contact_person && (
-                          <div className="text-xs text-emerald-400 font-medium mt-0.5">
-                            PIC: {s.contact_person}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {paginatedSuppliers.map((s) => (
+                  <div
+                    key={s.id}
+                    className="bg-[#0e1520] border border-white/[0.07] hover:border-white/20 rounded-xl p-4 sm:p-5 flex flex-col justify-between shadow-sm transition-all"
+                  >
+                    <div>
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                          <h3 className="text-sm font-bold text-white truncate">{s.name}</h3>
+                          {s.contact_person && (
+                            <div className="text-xs text-emerald-400 font-medium mt-0.5">
+                              PIC: {s.contact_person}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          {canManageSuppliers && (
+                            <>
+                              <button
+                                onClick={() => handleOpenEditSupplier(s)}
+                                className="p-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-slate-400 hover:text-white border border-white/10 transition-colors cursor-pointer"
+                                title="Edit Detail Supplier"
+                              >
+                                <Edit2 className="w-3.5 h-3.5 text-emerald-400" />
+                              </button>
+                              <button
+                                onClick={() => setDeleteConfirmSupplier(s)}
+                                className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 transition-colors cursor-pointer"
+                                title="Hapus Supplier"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Contact Details */}
+                      <div className="mt-4 space-y-2 text-xs text-slate-400">
+                        {s.phone && (
+                          <div className="flex items-center gap-2">
+                            <Phone className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                            <a href={`tel:${s.phone}`} className="hover:text-emerald-400 transition-colors font-mono">
+                              {s.phone}
+                            </a>
+                          </div>
+                        )}
+                        {s.email && (
+                          <div className="flex items-center gap-2">
+                            <Mail className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                            <a href={`mailto:${s.email}`} className="hover:text-emerald-400 transition-colors truncate">
+                              {s.email}
+                            </a>
+                          </div>
+                        )}
+                        {s.address && (
+                          <div className="flex items-start gap-2">
+                            <MapPin className="w-3.5 h-3.5 text-slate-500 shrink-0 mt-0.5" />
+                            <span className="line-clamp-2">{s.address}</span>
+                          </div>
+                        )}
+                        {s.notes && (
+                          <div className="p-2 rounded-lg bg-[#080d15] border border-white/[0.06] text-[11px] text-slate-400 line-clamp-2">
+                            {s.notes}
                           </div>
                         )}
                       </div>
-                      <div className="flex items-center gap-1 flex-shrink-0">
-                        {canManageSuppliers && (
-                          <>
-                            <button
-                              onClick={() => handleOpenEditSupplier(s)}
-                              className="p-1.5 rounded-md bg-white/[0.04] hover:bg-white/[0.08] text-slate-400 hover:text-white border border-white/10 transition-colors cursor-pointer"
-                              title="Edit Supplier"
-                            >
-                              <Edit2 className="w-3.5 h-3.5 text-emerald-400" />
-                            </button>
-                            <button
-                              onClick={() => setDeleteConfirmSupplier(s)}
-                              className="p-1.5 rounded-md bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 transition-colors cursor-pointer"
-                              title="Hapus Supplier"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </>
-                        )}
-                      </div>
                     </div>
 
-                    {/* Contact Details */}
-                    <div className="mt-4 space-y-2 text-xs text-slate-400">
-                      {s.phone && (
-                        <div className="flex items-center gap-2">
-                          <Phone className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />
-                          <a
-                            href={`tel:${s.phone}`}
-                            className="hover:text-emerald-400 transition-colors font-mono"
-                          >
-                            {s.phone}
-                          </a>
-                        </div>
-                      )}
-                      {s.email && (
-                        <div className="flex items-center gap-2">
-                          <Mail className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />
-                          <a
-                            href={`mailto:${s.email}`}
-                            className="hover:text-emerald-400 transition-colors truncate"
-                          >
-                            {s.email}
-                          </a>
-                        </div>
-                      )}
-                      {s.address && (
-                        <div className="flex items-start gap-2">
-                          <MapPin className="w-3.5 h-3.5 text-slate-500 flex-shrink-0 mt-0.5" />
-                          <span className="line-clamp-2">{s.address}</span>
-                        </div>
-                      )}
-                      {s.notes && (
-                        <div className="p-2 rounded-lg bg-[#090d14] border border-white/[0.06] text-[11px] text-slate-400 line-clamp-2">
-                          {s.notes}
-                        </div>
+                    {/* Restock Action Button */}
+                    <div className="mt-4 pt-3 border-t border-white/[0.06] flex items-center justify-between">
+                      <span className="text-[11px] text-slate-500 font-mono">
+                        {s.total_supplies > 0 ? `${s.total_supplies}x pasokan` : 'Belum ada pasokan'}
+                      </span>
+                      {canManageSuppliers && (
+                        <button
+                          onClick={() => handleOpenRestock(s.id)}
+                          className="px-2.5 py-1 rounded-md bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/20 text-xs font-semibold transition-colors inline-flex items-center gap-1 cursor-pointer"
+                        >
+                          <PackagePlus className="w-3.5 h-3.5" />
+                          <span>Pasok Stok</span>
+                        </button>
                       )}
                     </div>
                   </div>
-
-                  {/* Restock Action Button */}
-                  <div className="mt-4 pt-3 border-t border-white/[0.06] flex items-center justify-between">
-                    <span className="text-[11px] text-slate-500 font-mono">
-                      {s.total_supplies > 0
-                        ? `${s.total_supplies}x pasokan tercatat`
-                        : 'Belum ada pasokan'}
-                    </span>
-                    {canManageSuppliers && (
-                      <button
-                        onClick={() => handleOpenRestock(s.id)}
-                        className="px-2.5 py-1 rounded-md bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/20 text-xs font-medium transition-colors inline-flex items-center gap-1 cursor-pointer"
-                      >
-                        <PackagePlus className="w-3.5 h-3.5" />
-                        <span>Pasok Stok</span>
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="mt-4 flex items-center justify-between border-t border-white/[0.08] pt-3 text-xs text-slate-400">
-              <span className="font-mono">Menampilkan {paginatedSuppliers.length} dari {filteredSuppliers.length} supplier</span>
-              <div className="flex items-center gap-2">
-                <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1 || loading} className="rounded-md border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] p-1.5 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer transition-colors" aria-label="Halaman supplier sebelumnya"><ChevronLeft className="h-4 w-4" /></button>
-                <span className="font-mono text-slate-300 font-semibold">{page}/{totalPages}</span>
-                <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages || loading} className="rounded-md border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] p-1.5 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer transition-colors" aria-label="Halaman supplier berikutnya"><ChevronRight className="h-4 w-4" /></button>
+                ))}
               </div>
-            </div>
+
+              {/* Pagination */}
+              <div className="mt-4 flex items-center justify-between border-t border-white/[0.07] pt-3 text-xs text-slate-400">
+                <span className="font-mono">Menampilkan {paginatedSuppliers.length} dari {filteredSuppliers.length} supplier</span>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page === 1 || loading}
+                    className="rounded-lg border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] p-1.5 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer transition-colors"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                  <span className="font-mono text-slate-300 font-semibold">{page} / {totalPages}</span>
+                  <button
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={page === totalPages || loading}
+                    className="rounded-lg border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] p-1.5 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer transition-colors"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
             </>
           )}
         </div>
       )}
 
-      {/* Tab 2: Receiving History */}
+      {/* Tab 2: Receiving History Table */}
       {activeTab === 'history' && (
-        <div className="bg-[#0e1520] border border-white/[0.08] rounded-xl overflow-hidden shadow-sm">
-          <div className="p-3.5 border-b border-white/[0.08] flex items-center justify-between bg-black/10">
+        <div className="bg-[#0e1520] border border-white/[0.07] rounded-xl overflow-hidden shadow-sm">
+          <div className="p-3.5 border-b border-white/[0.07] flex items-center justify-between bg-black/10">
             <div className="flex items-center gap-2">
               <ArrowDownLeft className="w-4 h-4 text-emerald-400" />
-              <h2 className="text-sm font-semibold text-white">Catatan Pasokan Masuk (Receiving)</h2>
+              <h2 className="text-sm font-bold text-white">Catatan Pasokan Masuk (Receiving Inbound)</h2>
             </div>
             <span className="text-xs text-slate-400 font-mono">100 Riwayat Terakhir di {currentBranch?.name}</span>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs font-mono">
-              <thead className="bg-[#090d14]/70 text-slate-400 font-medium border-b border-white/[0.08] font-sans">
+              <thead className="bg-[#080d15]/80 text-slate-400 font-semibold border-b border-white/[0.07] font-sans">
                 <tr>
                   <th className="px-4 py-3">Waktu</th>
                   <th className="px-4 py-3">Produk</th>
@@ -609,13 +631,13 @@ export const SuppliersView: React.FC = () => {
               <tbody className="divide-y divide-white/[0.04]">
                 {loading ? (
                   <tr>
-                    <td colSpan={7} className="px-4 py-8 text-center text-slate-500 font-mono">
+                    <td colSpan={7} className="px-4 py-12 text-center text-slate-500 font-mono">
                       Memuat riwayat pasokan...
                     </td>
                   </tr>
                 ) : receivingMovements.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-4 py-8 text-center text-slate-500 font-sans">
+                    <td colSpan={7} className="px-4 py-12 text-center text-slate-500 font-sans">
                       Belum ada catatan pasokan masuk dari supplier.
                     </td>
                   </tr>
@@ -650,29 +672,42 @@ export const SuppliersView: React.FC = () => {
               </tbody>
             </table>
           </div>
-          <div className="flex items-center justify-between border-t border-white/[0.08] px-4 py-3 text-xs text-slate-400 bg-black/10">
+
+          <div className="flex items-center justify-between border-t border-white/[0.07] px-4 py-3 text-xs text-slate-400 bg-black/10">
             <span className="font-mono">Menampilkan {paginatedReceiving.length} dari {receivingMovements.length} riwayat</span>
             <div className="flex items-center gap-2">
-              <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1 || loading} className="rounded-md border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] p-1.5 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer transition-colors" aria-label="Halaman pasokan sebelumnya"><ChevronLeft className="h-4 w-4" /></button>
-              <span className="font-mono text-slate-300 font-semibold">{page}/{totalPages}</span>
-              <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages || loading} className="rounded-md border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] p-1.5 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer transition-colors" aria-label="Halaman pasokan berikutnya"><ChevronRight className="h-4 w-4" /></button>
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page === 1 || loading}
+                className="rounded-lg border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] p-1.5 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer transition-colors"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <span className="font-mono text-slate-300 font-semibold">{page} / {totalPages}</span>
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages || loading}
+                className="rounded-lg border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] p-1.5 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer transition-colors"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Restock Modal ("Pasok Stok Multi-Barang") */}
+      {/* Restock Multi-Item Modal */}
       {restockModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
-          <div className="bg-[#0e1520] border border-white/10 rounded-2xl w-full max-w-2xl max-h-[92vh] flex flex-col overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="p-4 border-b border-white/[0.08] flex items-center justify-between flex-shrink-0 bg-white/[0.02]">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-[#0e1520] border border-white/10 rounded-2xl w-full max-w-2xl max-h-[92vh] flex flex-col overflow-hidden shadow-2xl animate-in zoom-in-95 duration-150">
+            <div className="p-4 border-b border-white/[0.07] flex items-center justify-between shrink-0 bg-black/20">
               <div className="flex items-center gap-2.5">
                 <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                   <PackagePlus className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-white">Penerimaan Pasokan Stok Multi-Barang</h3>
-                  <p className="text-[11px] text-slate-400 mt-0.5">1x transaksi untuk menambah stok berbagai pilihan barang sekaligus</p>
+                  <h3 className="text-sm font-bold text-white">Penerimaan Pasokan Stok Multi-Barang</h3>
+                  <p className="text-[11px] text-slate-400 mt-0.5">Satu transaksi surat jalan untuk menambah kuantitas berbagai produk</p>
                 </div>
               </div>
               <button
@@ -685,20 +720,21 @@ export const SuppliersView: React.FC = () => {
 
             <form onSubmit={handleExecuteRestock} className="p-4 sm:p-5 space-y-4 overflow-y-auto flex-1">
               {restockSuccessMsg && (
-                <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-emerald-300 text-xs font-medium">
+                <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-emerald-300 text-xs font-semibold">
                   {restockSuccessMsg}
                 </div>
               )}
               {restockError && (
-                <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-lg text-rose-300 text-xs">
-                  {restockError}
+                <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-lg text-rose-300 text-xs flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
+                  <span>{restockError}</span>
                 </div>
               )}
 
-              {/* General Inbound Metadata */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-[#090d14] p-3.5 rounded-xl border border-white/[0.06]">
+              {/* Inbound Metadata Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-[#080d15] p-3.5 rounded-xl border border-white/[0.06]">
                 <div>
-                  <label className="block text-[11px] font-medium text-slate-300 mb-1">
+                  <label className="block text-[11px] font-semibold text-slate-300 mb-1">
                     Cabang Tujuan Penerimaan
                   </label>
                   <div className="px-3 py-2 bg-[#0e1520] border border-white/10 rounded-lg text-xs text-white font-medium flex items-center gap-2">
@@ -708,7 +744,7 @@ export const SuppliersView: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-medium text-slate-300 mb-1">
+                  <label className="block text-[11px] font-semibold text-slate-300 mb-1">
                     Pilih Supplier / Vendor
                   </label>
                   <select
@@ -716,7 +752,7 @@ export const SuppliersView: React.FC = () => {
                     onChange={(e) => setRestockSupplierId(e.target.value)}
                     className="w-full px-3 py-2 bg-[#0e1520] border border-white/10 rounded-lg text-xs text-white focus:outline-none focus:border-emerald-500/60"
                   >
-                    <option value="">-- Supplier Umum / Tanpa Vendor --</option>
+                    <option value="">-- Supplier Umum / Tanpa Rekanan --</option>
                     {suppliers.map((s) => (
                       <option key={s.id} value={s.id}>
                         {s.name} {s.contact_person ? `(${s.contact_person})` : ''}
@@ -726,8 +762,8 @@ export const SuppliersView: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-medium text-slate-300 mb-1">
-                    No. Surat Jalan / Faktur (Referensi)
+                  <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                    No. Faktur / Surat Jalan (Referensi)
                   </label>
                   <input
                     type="text"
@@ -739,39 +775,39 @@ export const SuppliersView: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-medium text-slate-300 mb-1">
+                  <label className="block text-[11px] font-semibold text-slate-300 mb-1">
                     Catatan Pasokan
                   </label>
                   <input
                     type="text"
                     value={restockNotes}
                     onChange={(e) => setRestockNotes(e.target.value)}
-                    placeholder="Contoh: Pengiriman batch supplier, kondisi baik..."
+                    placeholder="Contoh: Pengiriman batch supplier, segel aman..."
                     className="w-full px-3 py-2 bg-[#0e1520] border border-white/10 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/60"
                   />
                 </div>
               </div>
 
-              {/* Items Table / List */}
+              {/* Items List */}
               <div className="space-y-3">
-                <div className="flex items-center justify-between border-b border-white/[0.08] pb-2">
+                <div className="flex items-center justify-between border-b border-white/[0.07] pb-2">
                   <div className="flex items-center gap-2">
                     <Boxes className="w-4 h-4 text-emerald-400" />
-                    <h4 className="text-xs font-semibold text-white uppercase tracking-wider">
+                    <h4 className="text-xs font-bold text-white uppercase tracking-wider">
                       Daftar Barang yang Dipasok ({restockItems.length})
                     </h4>
                   </div>
                   <button
                     type="button"
                     onClick={handleAddRestockItem}
-                    className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-md text-xs font-medium transition-colors shadow-sm cursor-pointer"
+                    className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-md text-xs font-bold transition-colors shadow-sm cursor-pointer"
                   >
                     <Plus className="w-3.5 h-3.5" />
-                    <span>Tambah Barang</span>
+                    <span>Tambah Baris</span>
                   </button>
                 </div>
 
-                <div className="space-y-2.5 max-h-[38vh] overflow-y-auto pr-1">
+                <div className="space-y-2.5 max-h-[36vh] overflow-y-auto pr-1">
                   {restockItems.map((item, idx) => {
                     const prodObj = products.find((p) => p.id === item.productId);
                     const currentStock = prodObj ? prodObj.stock : 0;
@@ -781,14 +817,14 @@ export const SuppliersView: React.FC = () => {
                     return (
                       <div
                         key={item.id}
-                        className="p-3 bg-[#090d14] border border-white/[0.06] rounded-xl space-y-2 transition-colors hover:border-white/10"
+                        className="p-3 bg-[#080d15] border border-white/[0.06] rounded-xl space-y-2 transition-colors hover:border-white/10"
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <span className="w-5 h-5 rounded bg-white/[0.04] border border-white/10 text-slate-300 font-mono text-[10px] font-bold flex items-center justify-center">
                               {idx + 1}
                             </span>
-                            <span className="text-xs font-medium text-slate-200">
+                            <span className="text-xs font-semibold text-slate-200">
                               Item #{idx + 1}
                             </span>
                           </div>
@@ -801,7 +837,7 @@ export const SuppliersView: React.FC = () => {
                                 </span>
                                 <span className="text-slate-500">→</span>
                                 <span className="text-emerald-400 font-semibold">
-                                  Est. Baru: <strong className="font-mono">{newEstimated} {unit}</strong>
+                                  Est: <strong className="font-mono">{newEstimated} {unit}</strong>
                                 </span>
                               </div>
                             )}
@@ -821,7 +857,7 @@ export const SuppliersView: React.FC = () => {
 
                         <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-center">
                           <div className="sm:col-span-8">
-                            <label className="block text-[10px] font-medium text-slate-400 mb-1">
+                            <label className="block text-[10px] font-semibold text-slate-400 mb-1">
                               Pilih Produk <span className="text-rose-400">*</span>
                             </label>
                             <select
@@ -840,7 +876,7 @@ export const SuppliersView: React.FC = () => {
                           </div>
 
                           <div className="sm:col-span-4">
-                            <label className="block text-[10px] font-medium text-slate-400 mb-1">
+                            <label className="block text-[10px] font-semibold text-slate-400 mb-1">
                               Jumlah Masuk (Qty) <span className="text-rose-400">*</span>
                             </label>
                             <div className="flex items-center gap-1.5">
@@ -875,25 +911,16 @@ export const SuppliersView: React.FC = () => {
                     );
                   })}
                 </div>
-
-                <button
-                  type="button"
-                  onClick={handleAddRestockItem}
-                  className="w-full py-2 border border-dashed border-white/10 hover:border-emerald-500/60 rounded-xl text-xs text-slate-400 hover:text-emerald-400 font-medium flex items-center justify-center gap-2 transition-colors cursor-pointer bg-white/[0.02] hover:bg-white/[0.04]"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>+ Tambah Barang Lain ke Transaksi Pasokan Ini</span>
-                </button>
               </div>
 
               {/* Total Summary Bar */}
               <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg flex items-center justify-between text-xs">
-                <div className="text-slate-300 font-medium">
+                <div className="text-slate-300 font-semibold">
                   Ringkasan Pasokan Masuk:
                 </div>
                 <div className="flex items-center gap-4">
                   <span className="text-slate-300 font-mono">
-                    Total: <strong className="text-white font-mono">{restockItems.length}</strong> jenis barang
+                    Total: <strong className="text-white font-mono">{restockItems.length}</strong> jenis
                   </span>
                   <span className="text-emerald-400 font-bold font-mono text-sm">
                     {restockItems.reduce((acc, it) => acc + (Number(it.quantity) || 0), 0)} Unit
@@ -901,18 +928,18 @@ export const SuppliersView: React.FC = () => {
                 </div>
               </div>
 
-              <div className="pt-2 flex justify-end gap-2 border-t border-white/[0.08]">
+              <div className="pt-2 flex justify-end gap-2 border-t border-white/[0.07]">
                 <button
                   type="button"
                   onClick={() => setRestockModalOpen(false)}
-                  className="px-4 py-2 rounded-lg border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] text-slate-300 text-xs font-medium cursor-pointer transition-colors"
+                  className="px-4 py-2 rounded-lg border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] text-slate-300 text-xs font-semibold cursor-pointer transition-colors"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={restockSaving}
-                  className="px-5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-semibold shadow-sm cursor-pointer transition-colors inline-flex items-center gap-1.5"
+                  className="px-5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-bold shadow-sm cursor-pointer transition-colors inline-flex items-center gap-1.5"
                 >
                   <PackagePlus className="w-4 h-4" />
                   <span>
@@ -929,13 +956,13 @@ export const SuppliersView: React.FC = () => {
 
       {/* Supplier Form Modal (Add / Edit) */}
       {supplierModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
-          <div className="bg-[#0e1520] border border-white/10 rounded-2xl w-full max-w-md max-h-[92vh] flex flex-col overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="p-4 border-b border-white/[0.08] flex items-center justify-between flex-shrink-0 bg-white/[0.02]">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-[#0e1520] border border-white/10 rounded-2xl w-full max-w-md max-h-[92vh] flex flex-col overflow-hidden shadow-2xl animate-in zoom-in-95 duration-150">
+            <div className="p-4 border-b border-white/[0.07] flex items-center justify-between shrink-0 bg-black/20">
               <div className="flex items-center gap-2">
                 <Truck className="w-4 h-4 text-emerald-400" />
-                <h3 className="text-sm font-semibold text-white">
-                  {editingSupplier ? `Edit Supplier: ${editingSupplier.name}` : 'Tambah Supplier Baru'}
+                <h3 className="text-sm font-bold text-white">
+                  {editingSupplier ? `Edit Supplier: ${editingSupplier.name}` : 'Tambah Mitra Supplier'}
                 </h3>
               </div>
               <button
@@ -954,8 +981,8 @@ export const SuppliersView: React.FC = () => {
               )}
 
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">
-                  Nama Supplier / Perusahaan <span className="text-rose-400">*</span>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  Nama Perusahaan / Supplier <span className="text-rose-400">*</span>
                 </label>
                 <input
                   type="text"
@@ -963,66 +990,66 @@ export const SuppliersView: React.FC = () => {
                   value={sName}
                   onChange={(e) => setSName(e.target.value)}
                   placeholder="Contoh: PT. Sentosa Pangan Sejahtera"
-                  className="w-full px-3 py-2 bg-[#090d14] border border-white/10 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/60"
+                  className="w-full px-3.5 py-2.5 bg-[#080d15] border border-white/10 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/60"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">
-                  Contact Person (PIC / Sales)
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  Contact Person (PIC Sales)
                 </label>
                 <input
                   type="text"
                   value={sContact}
                   onChange={(e) => setSContact(e.target.value)}
-                  placeholder="Contoh: Pak Herman"
-                  className="w-full px-3 py-2 bg-[#090d14] border border-white/10 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/60"
+                  placeholder="Contoh: Bpk. Budi Santoso"
+                  className="w-full px-3.5 py-2.5 bg-[#080d15] border border-white/10 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/60"
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1">
-                    No. Telepon / WhatsApp
+                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                    No. Telepon / WA
                   </label>
                   <input
                     type="text"
                     value={sPhone}
                     onChange={(e) => setSPhone(e.target.value)}
                     placeholder="08123456789"
-                    className="w-full px-3 py-2 bg-[#090d14] border border-white/10 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/60 font-mono"
+                    className="w-full px-3.5 py-2.5 bg-[#080d15] border border-white/10 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/60 font-mono"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1">
-                    Email
+                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                    Email Kontak
                   </label>
                   <input
                     type="email"
                     value={sEmail}
                     onChange={(e) => setSEmail(e.target.value)}
                     placeholder="sales@vendor.com"
-                    className="w-full px-3 py-2 bg-[#090d14] border border-white/10 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/60"
+                    className="w-full px-3.5 py-2.5 bg-[#080d15] border border-white/10 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/60"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">
-                  Alamat Kantor / Gudang Supplier
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  Alamat Kantor / Gudang
                 </label>
                 <textarea
                   value={sAddress}
                   onChange={(e) => setSAddress(e.target.value)}
                   placeholder="Alamat lengkap supplier"
                   rows={2}
-                  className="w-full px-3 py-2 bg-[#090d14] border border-white/10 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/60 resize-none"
+                  className="w-full px-3.5 py-2 bg-[#080d15] border border-white/10 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/60 resize-none"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
                   Catatan Tambahan
                 </label>
                 <input
@@ -1030,22 +1057,22 @@ export const SuppliersView: React.FC = () => {
                   value={sNotes}
                   onChange={(e) => setSNotes(e.target.value)}
                   placeholder="Jadwal pengiriman rutin, syarat tempo, dsb."
-                  className="w-full px-3 py-2 bg-[#090d14] border border-white/10 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/60"
+                  className="w-full px-3.5 py-2.5 bg-[#080d15] border border-white/10 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/60"
                 />
               </div>
 
-              <div className="pt-2 flex justify-end gap-2 border-t border-white/[0.08]">
+              <div className="pt-2 flex justify-end gap-2 border-t border-white/[0.07]">
                 <button
                   type="button"
                   onClick={() => setSupplierModalOpen(false)}
-                  className="px-4 py-2 rounded-lg border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] text-slate-300 text-xs font-medium cursor-pointer transition-colors"
+                  className="px-4 py-2.5 rounded-lg border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] text-slate-300 text-xs font-semibold cursor-pointer transition-colors"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={supplierSaving}
-                  className="px-5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-semibold shadow-sm cursor-pointer transition-colors"
+                  className="px-5 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-bold shadow-sm cursor-pointer transition-colors"
                 >
                   {supplierSaving ? 'Menyimpan...' : 'Simpan Supplier'}
                 </button>
@@ -1057,30 +1084,30 @@ export const SuppliersView: React.FC = () => {
 
       {/* Delete Supplier Confirmation Modal */}
       {deleteConfirmSupplier && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
-          <div className="bg-[#0e1520] border border-white/10 rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl animate-in zoom-in-95">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-[#0e1520] border border-white/10 rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl animate-in zoom-in-95 duration-150">
             <div className="flex items-center gap-3 text-rose-400">
               <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20">
                 <Trash2 className="w-5 h-5" />
               </div>
-              <h3 className="text-sm font-semibold text-white">Hapus Supplier</h3>
+              <h3 className="text-sm font-bold text-white">Hapus Supplier</h3>
             </div>
 
             <p className="text-xs text-slate-300 leading-relaxed">
               Apakah Anda yakin ingin menghapus data supplier <strong className="text-white">{deleteConfirmSupplier.name}</strong>?
             </p>
 
-            <div className="flex items-center justify-end gap-2 pt-2">
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-white/[0.07]">
               <button
                 onClick={() => setDeleteConfirmSupplier(null)}
-                className="px-3.5 py-2 rounded-lg border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] text-slate-300 text-xs font-medium cursor-pointer transition-colors"
+                className="px-3.5 py-2 rounded-lg border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] text-slate-300 text-xs font-semibold cursor-pointer transition-colors"
               >
                 Batal
               </button>
               <button
                 onClick={() => handleDeleteSupplier(deleteConfirmSupplier)}
                 disabled={deleteLoading}
-                className="px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-500 disabled:opacity-50 text-white text-xs font-semibold shadow-sm cursor-pointer transition-colors"
+                className="px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-500 disabled:opacity-50 text-white text-xs font-bold shadow-sm cursor-pointer transition-colors"
               >
                 {deleteLoading ? 'Menghapus...' : 'Ya, Hapus'}
               </button>

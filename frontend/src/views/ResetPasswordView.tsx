@@ -22,7 +22,6 @@ export const ResetPasswordView: React.FC = () => {
 
     setToken(t);
 
-    // Verify token validity immediately with backend before displaying the form
     const verifyToken = async () => {
       try {
         const res = await fetch(`/api/v1/auth/verify-reset-token?token=${encodeURIComponent(t)}`);
@@ -86,29 +85,28 @@ export const ResetPasswordView: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#090d16] flex flex-col justify-center items-center p-4 relative overflow-hidden">
-      <div className="absolute inset-0 bg-dot-pattern opacity-60 pointer-events-none" />
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-gradient-to-b from-emerald-500/10 via-teal-500/5 to-transparent blur-3xl pointer-events-none" />
+    <div className="min-h-screen bg-[#080d14] flex flex-col justify-center items-center p-4 relative overflow-hidden select-none">
+      <div className="absolute inset-0 bg-dot-pattern opacity-40 pointer-events-none" />
 
       <div className="relative z-10 w-full max-w-sm">
-        <div className="flex flex-col items-center mb-7">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-500/20 mb-3.5">
-            <Store className="w-7 h-7 text-slate-950" />
+        <div className="flex flex-col items-center mb-6">
+          <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-3 shadow-md shadow-emerald-950/40">
+            <Store className="w-6 h-6" />
           </div>
-          <h1 className="text-2xl font-black text-white tracking-tight">Sentosa POS</h1>
-          <p className="text-slate-400 text-xs mt-1">Atur Password Baru</p>
+          <h1 className="text-xl font-bold text-white tracking-tight">Sentosa POS</h1>
+          <p className="text-slate-400 text-xs mt-0.5">Atur Ulang Kata Sandi Akun</p>
         </div>
 
-        <div className="bg-[#0e1520]/95 backdrop-blur-xl border border-white/[0.08] rounded-xl p-6 sm:p-7 shadow-2xl shadow-black/60">
+        <div className="bg-[#0e1520] border border-white/[0.08] rounded-2xl p-6 shadow-2xl">
           {status === 'verifying' && (
             <div className="flex flex-col items-center text-center gap-4 py-6">
-              <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-                <Loader2 className="w-7 h-7 text-emerald-400 animate-spin" />
+              <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+                <Loader2 className="w-6 h-6 text-emerald-400 animate-spin" />
               </div>
               <div>
-                <h2 className="text-sm font-bold text-white mb-1">Memeriksa Link Reset...</h2>
+                <h2 className="text-sm font-bold text-white mb-1">Memeriksa Tautan Reset...</h2>
                 <p className="text-xs text-slate-400 leading-relaxed">
-                  Mohon tunggu sebentar, sistem sedang memverifikasi keabsahan tautan Anda.
+                  Sistem sedang memverifikasi keabsahan token keamanan Anda.
                 </p>
               </div>
             </div>
@@ -116,41 +114,41 @@ export const ResetPasswordView: React.FC = () => {
 
           {status === 'success' && (
             <div className="flex flex-col items-center text-center gap-4 py-2">
-              <div className="w-16 h-16 rounded-full bg-emerald-500/15 border-2 border-emerald-500/40 flex items-center justify-center">
-                <CheckCircle2 className="w-8 h-8 text-emerald-400" />
+              <div className="w-14 h-14 rounded-full bg-emerald-500/15 border border-emerald-500/40 flex items-center justify-center">
+                <CheckCircle2 className="w-7 h-7 text-emerald-400" />
               </div>
               <div>
-                <h2 className="text-base font-bold text-white mb-2">Password Berhasil Diperbarui!</h2>
-                <p className="text-sm text-slate-400">{message}</p>
+                <h2 className="text-sm font-bold text-white mb-1">Kata Sandi Berhasil Diperbarui!</h2>
+                <p className="text-xs text-slate-400">{message}</p>
               </div>
               <a
                 href="/"
-                className="mt-2 px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 rounded-xl text-white font-bold text-sm transition-colors"
+                className="mt-2 w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 rounded-lg text-white font-bold text-xs text-center transition-colors"
               >
-                Kembali ke Login
+                Masuk dengan Kata Sandi Baru
               </a>
             </div>
           )}
 
           {status === 'error' && (
-            <div className="flex flex-col items-center text-center gap-4 py-2 animate-in zoom-in-95 duration-200">
-              <div className="w-16 h-16 rounded-full bg-rose-500/15 border-2 border-rose-500/40 flex items-center justify-center shadow-lg shadow-rose-500/10">
-                <AlertCircle className="w-8 h-8 text-rose-400" />
+            <div className="flex flex-col items-center text-center gap-4 py-2 animate-in zoom-in-95 duration-150">
+              <div className="w-14 h-14 rounded-full bg-rose-500/15 border border-rose-500/40 flex items-center justify-center">
+                <AlertCircle className="w-7 h-7 text-rose-400" />
               </div>
               <div>
-                <h2 className="text-base font-bold text-white mb-1.5">Link Tidak Berlaku</h2>
-                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-xs">{message}</p>
+                <h2 className="text-sm font-bold text-white mb-1">Tautan Tidak Berlaku</h2>
+                <p className="text-xs text-slate-300 leading-relaxed max-w-xs">{message}</p>
               </div>
               <div className="pt-2 flex flex-col gap-2 w-full">
                 <a
                   href="/"
-                  className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all text-center"
+                  className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition-all text-center"
                 >
-                  Minta Link Reset Baru
+                  Minta Tautan Reset Baru
                 </a>
                 <a
                   href="/"
-                  className="w-full py-2 text-slate-400 hover:text-slate-200 text-xs transition-colors text-center"
+                  className="w-full py-2 text-slate-400 hover:text-slate-200 text-xs transition-colors text-center font-medium"
                 >
                   Kembali ke Halaman Login
                 </a>
@@ -160,11 +158,11 @@ export const ResetPasswordView: React.FC = () => {
 
           {status === 'form' && (
             <>
-              <h2 className="text-base font-bold text-white mb-1">Buat Password Baru</h2>
-              <p className="text-xs text-slate-400 mb-5">Password minimal 8 karakter.</p>
+              <h2 className="text-sm font-bold text-white mb-1">Buat Password Baru</h2>
+              <p className="text-xs text-slate-400 mb-4">Gunakan kombinasi minimal 8 karakter.</p>
 
               {message && (
-                <div className="mb-4 p-3 bg-rose-500/10 border border-rose-500/25 rounded-xl text-rose-400 text-xs">
+                <div className="mb-4 p-3 bg-rose-500/10 border border-rose-500/20 rounded-lg text-rose-400 text-xs">
                   {message}
                 </div>
               )}
@@ -173,10 +171,10 @@ export const ResetPasswordView: React.FC = () => {
                 {/* Password */}
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 mb-1.5" htmlFor="new-password">
-                    Password Baru
+                    Kata Sandi Baru
                   </label>
                   <div className="relative">
-                    <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                     <input
                       id="new-password"
                       type={showPass ? 'text' : 'password'}
@@ -184,17 +182,17 @@ export const ResetPasswordView: React.FC = () => {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Minimal 8 karakter"
-                      className="w-full pl-10 pr-11 py-2.5 bg-[#090d14] border border-white/[0.08] rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors"
+                      className="w-full pl-10 pr-10 py-2.5 bg-[#080d15] border border-white/10 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/60 transition-colors"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPass((v) => !v)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors"
                     >
                       {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
-                  {/* Strength bar */}
+                  {/* Strength Bar */}
                   {password.length > 0 && (
                     <div className="mt-2 space-y-1">
                       <div className="flex gap-1">
@@ -207,8 +205,8 @@ export const ResetPasswordView: React.FC = () => {
                           />
                         ))}
                       </div>
-                      <p className={`text-[11px] font-medium ${strengthColor.replace('bg-', 'text-')}`}>
-                        {strengthLabel}
+                      <p className={`text-[10px] font-mono font-medium ${strengthColor.replace('bg-', 'text-')}`}>
+                        Kekuatan: {strengthLabel}
                       </p>
                     </div>
                   )}
@@ -217,35 +215,35 @@ export const ResetPasswordView: React.FC = () => {
                 {/* Confirm Password */}
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 mb-1.5" htmlFor="confirm-password">
-                    Konfirmasi Password
+                    Ulangi Kata Sandi
                   </label>
                   <div className="relative">
-                    <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                     <input
                       id="confirm-password"
                       type={showConfirm ? 'text' : 'password'}
                       autoComplete="new-password"
                       value={confirm}
                       onChange={(e) => setConfirm(e.target.value)}
-                      placeholder="Ulangi password baru"
-                      className={`w-full pl-10 pr-11 py-2.5 bg-[#090d14]/80 border rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none transition-colors ${
+                      placeholder="Ketik ulang kata sandi"
+                      className={`w-full pl-10 pr-10 py-2.5 bg-[#080d15] border rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none transition-colors ${
                         confirm && password !== confirm
                           ? 'border-rose-500 focus:border-rose-400'
                           : confirm && password === confirm
                           ? 'border-emerald-500'
-                          : 'border-white/[0.08] focus:border-emerald-500'
+                          : 'border-white/10 focus:border-emerald-500/60'
                       }`}
                     />
                     <button
                       type="button"
                       onClick={() => setShowConfirm((v) => !v)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors"
                     >
                       {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
                   {confirm && password !== confirm && (
-                    <p className="mt-1 text-[11px] text-rose-400">Password tidak cocok</p>
+                    <p className="mt-1 text-[11px] text-rose-400">Kata sandi tidak cocok</p>
                   )}
                 </div>
 
@@ -253,9 +251,9 @@ export const ResetPasswordView: React.FC = () => {
                   id="reset-submit"
                   type="submit"
                   disabled={loading || !token}
-                  className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 text-white font-bold text-sm rounded-xl shadow-lg shadow-emerald-600/25 transition-all cursor-pointer"
+                  className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs rounded-lg shadow-md shadow-emerald-950/40 transition-all cursor-pointer"
                 >
-                  {loading ? 'Memperbarui...' : 'Simpan Password Baru'}
+                  {loading ? 'Menyimpan Kata Sandi...' : 'Simpan Kata Sandi Baru'}
                 </button>
               </form>
             </>
